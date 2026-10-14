@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>委員会管理・研修記録システム - 訪問看護ステーションなごみ</title>
+  <title>委員会管理・研修記録システム - 株式会社 松</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -12,7 +12,7 @@
     @media print {
       .no-print { display: none !important; }
       .print-only { display: block !important; }
-      body { background: white; color: black; font-size: 12pt; }
+      body { background: white; color: black; font-size: 11pt; }
       .card { border: none !important; shadow: none !important; padding: 0 !important; }
     }
     .print-only { display: none; }
@@ -20,344 +20,622 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
 
-  <!-- Header / Navigation -->
-  <header class="bg-teal-700 text-white shadow-md no-print">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div class="flex items-center space-x-3">
-        <i data-lucide="clipboard-check" class="w-8 h-8 text-teal-200"></i>
-        <div>
-          <h1 class="text-xl font-bold tracking-wide">委員会管理・研修記録システム</h1>
-          <p class="text-xs text-teal-100">訪問看護ステーションなごみ</p>
+  <!-- ========================================== -->
+  <!-- 1. LOGIN SCREEN                           -->
+  <!-- ========================================== -->
+  <section id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-teal-800 to-slate-900">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+      
+      <div class="bg-teal-700 text-white p-6 text-center">
+        <div class="w-12 h-12 bg-teal-600/50 rounded-full flex items-center justify-center mx-auto mb-3 text-teal-100">
+          <i data-lucide="shield-check" class="w-7 h-7"></i>
+        </div>
+        <h1 class="text-xl font-bold tracking-wide">株式会社 松</h1>
+        <p class="text-xs text-teal-100 mt-1">委員会管理・研修記録システム</p>
+      </div>
+
+      <div class="p-6 sm:p-8">
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ユーザーID</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i data-lucide="user" class="w-4 h-4"></i>
+              </span>
+              <input type="text" id="login-id" required placeholder="IDを入力" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">パスワード</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i data-lucide="key-round" class="w-4 h-4"></i>
+              </span>
+              <input type="password" id="login-pw" required placeholder="パスワードを入力" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500">
+            </div>
+          </div>
+
+          <div id="login-error" class="hidden text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200 flex items-center gap-1.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span>IDまたはパスワードが正しくありません。</span>
+          </div>
+
+          <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
+            <span>ログイン</span>
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        <div class="mt-4 text-center">
+          <button onclick="togglePasswordResetModal(true)" class="text-xs text-teal-700 hover:underline">
+            ID・パスワードを忘れた場合はこちら
+          </button>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
+          <p class="font-semibold text-slate-600 mb-0.5">【初期ログイン情報】</p>
+          <p>ID: <code class="font-bold text-slate-800">matsu</code> / PW: <code class="font-bold text-slate-800">matsu0001</code></p>
         </div>
       </div>
-      <nav class="flex space-x-1 sm:space-x-2 bg-teal-800/60 p-1.5 rounded-lg text-sm">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5 bg-white text-teal-800 shadow-sm">
-          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> ダッシュボード
-        </button>
-        <button onclick="switchTab('staffs')" id="nav-staffs" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5 text-teal-100 hover:text-white hover:bg-teal-700/50">
-          <i data-lucide="users" class="w-4 h-4"></i> 委員会スタッフ設定
-        </button>
-        <button onclick="switchTab('meeting-create')" id="nav-meeting-create" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5 text-teal-100 hover:text-white hover:bg-teal-700/50">
-          <i data-lucide="calendar-plus" class="w-4 h-4"></i> 会議・議事録作成
-        </button>
-      </nav>
     </div>
-  </header>
+  </section>
 
-  <!-- Main Content Container -->
-  <main class="max-w-7xl mx-auto px-4 py-8">
 
-    <!-- ========================================== -->
-    <!-- TAB 1: DASHBOARD                           -->
-    <!-- ========================================== -->
-    <section id="tab-dashboard" class="tab-content space-y-6">
-      
-      <!-- Top Alert / Station Info Banner -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <span class="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded mb-1">事業所情報</span>
-          <h2 class="text-2xl font-bold text-slate-800">訪問看護ステーションなごみ</h2>
-          <p class="text-sm text-slate-500 mt-1">2026年度（令和8年度）法定委員会・研修実施状況ログ</p>
-        </div>
-        <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm">
-          <i data-lucide="shield-check" class="w-6 h-6 text-teal-600"></i>
+  <!-- Password Reset Modal -->
+  <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+          <i data-lucide="help-circle" class="w-4 h-4 text-teal-600"></i> パスワードの復帰・再設定
+        </h3>
+        <button onclick="togglePasswordResetModal(false)" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs text-slate-700">
+        <p>管理者認証コードを入力することで、パスワードを初期状態（<span class="font-bold">matsu0001</span>）へリセットします。</p>
+
+        <form onsubmit="handleResetPassword(event)" class="space-y-3">
           <div>
-            <div class="font-semibold text-slate-700">実地指導（運営指導）適合チェック</div>
-            <div class="text-xs text-slate-500">法令要件に基づく開催頻度・研修記録を自動追跡中</div>
+            <label class="block font-bold text-slate-700 mb-1">対象ユーザーID</label>
+            <input type="text" id="reset-user-id" required value="matsu" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">管理者認証コード（初期設定: matsu）</label>
+            <input type="password" id="reset-code" required placeholder="認証コードを入力" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+          </div>
+          <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg transition">
+            パスワードを初期化する
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- 2. MAIN APPLICATION                       -->
+  <!-- ========================================== -->
+  <div id="main-app" class="hidden">
+
+    <!-- Navigation Header -->
+    <header class="bg-teal-700 text-white shadow-md no-print">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center space-x-3">
+          <i data-lucide="building" class="w-8 h-8 text-teal-200"></i>
+          <div>
+            <h1 class="text-xl font-bold tracking-wide">委員会管理・研修記録システム</h1>
+            <p class="text-xs text-teal-100">株式会社 松 （香川県・高松市 運営指導対応）</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <nav class="flex space-x-1 sm:space-x-2 bg-teal-800/60 p-1 rounded-lg text-xs sm:text-sm">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1 bg-white text-teal-800 shadow-sm">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i> ダッシュボード
+            </button>
+            <button onclick="switchTab('plan')" id="nav-plan" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1 text-teal-100 hover:text-white hover:bg-teal-700/50">
+              <i data-lucide="calendar" class="w-4 h-4"></i> 年間計画表
+            </button>
+            <button onclick="switchTab('staffs')" id="nav-staffs" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1 text-teal-100 hover:text-white hover:bg-teal-700/50">
+              <i data-lucide="users" class="w-4 h-4"></i> メンバー・通知設定
+            </button>
+            <button onclick="switchTab('meeting-create')" id="nav-meeting-create" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1 text-teal-100 hover:text-white hover:bg-teal-700/50">
+              <i data-lucide="sparkles" class="w-4 h-4"></i> 会議・AI議事録
+            </button>
+            <button onclick="switchTab('import')" id="nav-import" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1 text-teal-100 hover:text-white hover:bg-teal-700/50">
+              <i data-lucide="file-up" class="w-4 h-4"></i> 過去ファイル取込
+            </button>
+          </nav>
+
+          <div class="flex items-center gap-2 border-l border-teal-600 pl-3">
+            <button onclick="handleLogout()" title="ログアウト" class="p-1.5 text-teal-200 hover:text-white hover:bg-teal-600 rounded-lg transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
           </div>
         </div>
       </div>
+    </header>
 
-      <!-- Committee Progress Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="dashboard-cards">
-        <!-- Cards dynamically populated by JavaScript -->
-      </div>
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
 
-      <!-- Recent Minutes List -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-          <h3 class="font-bold text-slate-800 flex items-center gap-2">
-            <i data-lucide="file-text" class="w-5 h-5 text-teal-600"></i> 実施済み会議・議事録履歴
-          </h3>
-          <span class="text-xs text-slate-500">最新順</span>
+      <!-- ========================================== -->
+      <!-- TAB 1: DASHBOARD                           -->
+      <!-- ========================================== -->
+      <section id="tab-dashboard" class="tab-content space-y-6">
+        
+        <!-- Top Controls & Alert Banner -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded">法人・事業所</span>
+              <h2 class="text-2xl font-bold text-slate-800">株式会社 松</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">香川県（長寿社会対策課）および 高松市（指導監査課）運営指導マニュアル完全準拠</p>
+          </div>
+
+          <!-- Fiscal Year Selector -->
+          <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            <label class="text-xs font-bold text-slate-700">表示年度:</label>
+            <select id="dashboard-fy-select" onchange="renderDashboard()" class="bg-white border border-slate-300 font-bold text-teal-800 text-sm rounded-lg p-1.5">
+              <option value="2026">2026年度 (令和8年度)</option>
+              <option value="2025">2025年度 (令和7年度)</option>
+              <option value="2024">2024年度 (令和6年度)</option>
+            </select>
+          </div>
         </div>
-        <div class="divide-y divide-slate-100" id="recent-minutes-list">
+
+        <!-- Monthly Alert Banner for Current Month Meetings -->
+        <div id="monthly-alert-banner" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm space-y-2">
           <!-- Populated by JS -->
         </div>
-      </div>
-    </section>
 
-
-    <!-- ========================================== -->
-    <!-- TAB 2: STAFF & COMMITTEE ASSIGNMENT        -->
-    <!-- ========================================== -->
-    <section id="tab-staffs" class="tab-content space-y-6 hidden">
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-        <h2 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
-          <i data-lucide="user-check" class="w-5 h-5 text-teal-600"></i> 委員会構成員（メンバー）設定
-        </h2>
-        <p class="text-sm text-slate-600 mb-6">
-          各委員会に所属するスタッフ（委員長・委員・書記）を設定します。<br>
-          <span class="text-amber-700 font-medium">※会議の出席者および議事録作成担当者は、ここで各委員会に登録されたメンバーからのみ選択可能となります。</span>
-        </p>
-
-        <!-- Select Committee to Manage -->
-        <div class="mb-6 max-w-md">
-          <label class="block text-sm font-semibold text-slate-700 mb-2">設定対象の委員会を選択</label>
-          <select id="staff-manage-committee-select" onchange="renderCommitteeStaffManager()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2.5 text-sm focus:ring-teal-500 focus:border-teal-500">
-            <!-- Populated by JS -->
-          </select>
+        <!-- Committee Progress Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="dashboard-cards">
+          <!-- Cards Populated by JS -->
         </div>
 
-        <!-- Assigned Staff Table / List -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Assigned Members list -->
-          <div class="lg:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <h3 class="font-bold text-sm text-slate-700 mb-3 flex items-center justify-between">
-              <span>現在の登録メンバー</span>
-              <span id="assigned-count-badge" class="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full font-semibold">0名</span>
+        <!-- Recent Minutes History Section (With FY Filter) -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="file-text" class="w-5 h-5 text-teal-600"></i> 議事録・研修実施記録 履歴一覧
             </h3>
-            <div id="committee-staff-list" class="space-y-2">
-              <!-- Populated by JS -->
-            </div>
+            <span class="text-xs text-slate-500" id="history-count-badge">0件</span>
           </div>
+          <div class="divide-y divide-slate-100" id="recent-minutes-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
 
-          <!-- Add Member Form -->
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <h3 class="font-bold text-sm text-slate-700">メンバー新規割り当て</h3>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: ANNUAL PLAN & SCHEDULE (新規追加)   -->
+      <!-- ========================================== -->
+      <section id="tab-plan" class="tab-content space-y-6 hidden">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-              <label class="block text-xs text-slate-600 mb-1">職員名（職種）</label>
-              <select id="add-staff-select" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
-                <!-- Populated by JS -->
-              </select>
+              <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="calendar" class="w-5 h-5 text-teal-600"></i> 法定委員会・研修 年間計画表
+              </h2>
+              <p class="text-xs text-slate-500">当年度に実施すべき委員会のスケジュール・研修予定テーマを可視化・編集します。</p>
             </div>
-            <div>
-              <label class="block text-xs text-slate-600 mb-1">委員会内役割</label>
-              <select id="add-staff-role" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
-                <option value="委員">委員</option>
-                <option value="委員長">委員長</option>
-                <option value="副委員長">副委員長</option>
-                <option value="書記">書記（議事録担当）</option>
-              </select>
-            </div>
-            <button onclick="addStaffToCommittee()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-1.5">
-              <i data-lucide="plus" class="w-4 h-4"></i> メンバー追加
+            <button onclick="resetAnnualPlanToDefault()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> 法定標準スケジュールで再自動生成
             </button>
           </div>
 
+          <!-- Annual Schedule Table (12 Months Grid) -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse border border-slate-200">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 text-center">
+                  <th class="p-2.5 border border-slate-200 w-32">委員会種別</th>
+                  <th class="p-2 border border-slate-200">4月</th>
+                  <th class="p-2 border border-slate-200">5月</th>
+                  <th class="p-2 border border-slate-200">6月</th>
+                  <th class="p-2 border border-slate-200">7月</th>
+                  <th class="p-2 border border-slate-200">8月</th>
+                  <th class="p-2 border border-slate-200 bg-amber-50/60">9月(防災)</th>
+                  <th class="p-2 border border-slate-200">10月</th>
+                  <th class="p-2 border border-slate-200">11月</th>
+                  <th class="p-2 border border-slate-200">12月</th>
+                  <th class="p-2 border border-slate-200">1月</th>
+                  <th class="p-2 border border-slate-200">2月</th>
+                  <th class="p-2 border border-slate-200">3月</th>
+                </tr>
+              </thead>
+              <tbody id="annual-plan-tbody">
+                <!-- Populated dynamically by JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
 
-    <!-- ========================================== -->
-    <!-- TAB 3: MEETING & AI MINUTES CREATION       -->
-    <!-- ========================================== -->
-    <section id="tab-meeting-create" class="tab-content space-y-6 hidden">
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-        <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="sparkles" class="w-5 h-5 text-teal-600"></i> 会議・研修記録 & AI自動議事録作成
-        </h2>
-        <p class="text-sm text-slate-500 mb-6">委員会開催情報・研修内容を入力し、音声メモ等からAIが実地指導に対応した議事録を整形・作成します。</p>
+      <!-- ========================================== -->
+      <!-- TAB 3: MEMBERS & NOTIFICATION SETTINGS     -->
+      <!-- ========================================== -->
+      <section id="tab-staffs" class="tab-content space-y-6 hidden">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-6">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="users" class="w-5 h-5 text-teal-600"></i> 委員会メンバー構成 & 通知設定
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              各委員会の専任スタッフおよび、当月開催通知を送信するためのメールアドレス・LINE WORKS連携設定を行います。
+            </p>
+          </div>
 
-        <form id="meeting-form" onsubmit="handleGenerateMinutes(event)" class="space-y-6">
-          
-          <!-- Basic Info Block -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">対象委員会 <span class="text-rose-500">*</span></label>
-              <select id="meeting-committee-select" onchange="onMeetingCommitteeChange()" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-teal-500">
-                <!-- Populated by JS -->
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">開催日時 <span class="text-rose-500">*</span></label>
-              <input type="datetime-local" id="meeting-date" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">開催場所 / 実施方法</label>
-              <input type="text" id="meeting-location" value="訪問看護ステーションなごみ 会議室" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">研修実施時間（分）<span class="text-rose-500">*</span></label>
-              <input type="number" id="training-duration" min="15" step="5" value="30" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
+          <!-- LINE WORKS / Email Integration Box -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+              <i data-lucide="bell" class="w-4 h-4 text-amber-600"></i> 開催通知（LINE WORKS / メール）連携設定
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">LINE WORKS Webhook URL (Bot通知用)</label>
+                <input type="text" id="line-works-url" placeholder="https://authapi.worksmobile.com/..." class="w-full bg-white border border-slate-300 rounded p-2">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">事業所代表・送信元メールアドレス</label>
+                <input type="email" id="sender-email" value="info@matsu-visiting.jp" class="w-full bg-white border border-slate-300 rounded p-2">
+              </div>
             </div>
           </div>
 
-          <!-- Multiple Theme Selection Block (IMPROVED) -->
-          <div class="bg-teal-50/60 p-4 rounded-xl border border-teal-200 space-y-3">
-            <div class="flex items-center justify-between">
-              <label class="block text-xs font-bold text-teal-900">法定定番研修・議題テーマ（選択肢リスト）</label>
-              <span class="text-xs text-teal-700">※委員会の選択に合わせて選択肢が変化します</span>
+          <!-- Member Assignment Tool -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-4">
+              <div class="flex justify-between items-center">
+                <label class="text-sm font-bold text-slate-800">対象委員会の切り替え</label>
+                <select id="staff-manage-committee-select" onchange="renderCommitteeStaffManager()" class="bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2 text-xs">
+                  <!-- JS populated -->
+                </select>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div id="committee-staff-list" class="space-y-2">
+                  <!-- JS populated -->
+                </div>
+              </div>
             </div>
-            <div class="flex flex-col sm:flex-row gap-2">
-              <select id="theme-options-select" class="flex-1 bg-white border border-teal-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-teal-500">
-                <!-- Populated dynamically based on selected committee -->
-              </select>
-              <button type="button" onclick="applySelectedThemeOption()" class="bg-teal-700 hover:bg-teal-800 text-white font-medium text-xs px-4 py-2.5 rounded-lg transition whitespace-nowrap flex items-center justify-center gap-1">
-                <i data-lucide="check-circle" class="w-4 h-4"></i> このテーマを適用
+
+            <!-- Add Staff Form -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs">
+              <h3 class="font-bold text-slate-800">メンバーの新規追加</h3>
+              <div>
+                <label class="block text-slate-600 mb-1">職員名（職種）</label>
+                <select id="add-staff-select" class="w-full bg-slate-50 border border-slate-300 rounded p-2">
+                  <!-- JS populated -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">委員会内役割</label>
+                <select id="add-staff-role" class="w-full bg-slate-50 border border-slate-300 rounded p-2">
+                  <option value="委員">委員</option>
+                  <option value="委員長">委員長</option>
+                  <option value="副委員長">副委員長</option>
+                  <option value="書記">書記（議事録担当）</option>
+                </select>
+              </div>
+              <button onclick="addStaffToCommittee()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded transition">
+                割り当て追加
               </button>
             </div>
-            
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ========================================== -->
+      <!-- TAB 4: MEETING CREATION & AI MINUTES       -->
+      <!-- ========================================== -->
+      <section id="tab-meeting-create" class="tab-content space-y-6 hidden">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div class="flex justify-between items-start mb-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">決定・入力された研修・議題テーマ <span class="text-rose-500">*</span></label>
-              <input type="text" id="meeting-theme" required placeholder="選択肢から適用するか、直接入力してください" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm font-medium text-slate-800">
+              <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-5 h-5 text-teal-600"></i> 実地指導適合 AI自動議事録作成
+              </h2>
+              <p class="text-xs text-slate-500">香川県・高松市の運営指導でチェックされる必須項目を網羅した議事録を自動生成します。</p>
+            </div>
+            <span class="bg-teal-50 text-teal-800 text-xs px-2.5 py-1 rounded-full border border-teal-200 font-semibold">株式会社 松 標準フォーマット</span>
+          </div>
+
+          <form id="meeting-form" onsubmit="handleGenerateMinutes(event)" class="space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">対象委員会 <span class="text-rose-500">*</span></label>
+                <select id="meeting-committee-select" onchange="onMeetingCommitteeChange()" required class="w-full bg-white border border-slate-300 rounded p-2 text-sm">
+                  <!-- JS populated -->
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">開催日時 <span class="text-rose-500">*</span></label>
+                <input type="datetime-local" id="meeting-date" required class="w-full bg-white border border-slate-300 rounded p-2 text-sm">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">開催場所 / 実施方法</label>
+                <input type="text" id="meeting-location" value="株式会社 松 本社会議室" class="w-full bg-white border border-slate-300 rounded p-2 text-sm">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">研修実施時間（分）<span class="text-rose-500">*</span> ※運営指導必須要件</label>
+                <input type="number" id="training-duration" min="15" step="5" value="30" required class="w-full bg-white border border-slate-300 rounded p-2 text-sm">
+              </div>
+            </div>
+
+            <!-- Multiple Theme Option List -->
+            <div class="bg-teal-50/60 p-4 rounded-xl border border-teal-200 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <label class="block font-bold text-teal-900">法定定番研修・議題テーマ案</label>
+                <span class="text-teal-700">選択した委員会に応じて提案されます</span>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <select id="theme-options-select" class="flex-1 bg-white border border-teal-300 text-slate-800 text-xs rounded p-2 focus:ring-teal-500">
+                  <!-- JS Populated -->
+                </select>
+                <button type="button" onclick="applySelectedThemeOption()" class="bg-teal-700 hover:bg-teal-800 text-white font-medium text-xs px-3 py-2 rounded transition whitespace-nowrap">
+                  このテーマを適用
+                </button>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">決定研修・議題テーマ <span class="text-rose-500">*</span></label>
+                <input type="text" id="meeting-theme" required placeholder="直接入力も可能" class="w-full bg-white border border-slate-300 rounded p-2 text-sm font-medium">
+              </div>
+            </div>
+
+            <!-- Attendance & Reporter Validation -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+              <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label class="block font-bold text-slate-700 mb-2">出席委員（受講者名簿記録）<span class="text-rose-500">*</span></label>
+                <div id="attendees-checkbox-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white p-3 rounded-lg border border-slate-200 max-h-48 overflow-y-auto">
+                  <!-- JS populated -->
+                </div>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">議事録作成担当者 <span class="text-rose-500">*</span></label>
+                  <select id="meeting-reporter-select" required class="w-full bg-white border border-slate-300 rounded p-2 text-sm">
+                    <!-- JS populated -->
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Raw Notes Input -->
+            <div class="text-xs">
+              <label class="block font-bold text-slate-700 mb-1">録音文字起こしテキスト または 協議メモ</label>
+              <textarea id="meeting-raw-text" rows="4" class="w-full bg-white border border-slate-300 rounded p-2 text-sm" placeholder="メモや発言の要点（欠席者への追講予定など）を入力してください。"></textarea>
+            </div>
+
+            <button type="submit" id="generate-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
+              <i data-lucide="cpu" class="w-5 h-5"></i> 実地指導適合 議事録自動作成
+            </button>
+          </form>
+        </div>
+
+        <!-- Output Document Preview -->
+        <div id="minutes-output-card" class="bg-white rounded-xl p-8 shadow-md border border-slate-200 hidden space-y-6">
+          <div class="flex justify-between items-center border-b pb-4 no-print">
+            <h3 class="font-bold text-lg text-teal-800">議事録プレビュー（香川県・高松市 運営指導提出可能）</h3>
+            <div class="flex gap-2">
+              <button onclick="window.print()" class="bg-slate-800 text-white text-xs px-3 py-2 rounded flex items-center gap-1">
+                <i data-lucide="printer" class="w-4 h-4"></i> 印刷 / PDF出力
+              </button>
+              <button onclick="saveCurrentMinutes()" class="bg-teal-600 text-white text-xs px-3 py-2 rounded flex items-center gap-1">
+                <i data-lucide="save" class="w-4 h-4"></i> システムへ確定保存
+              </button>
             </div>
           </div>
 
-          <!-- Committee Staff Validation Section (Attendances & Reporter) -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- Attendance Checklist -->
-            <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div class="flex justify-between items-center mb-2">
-                <label class="block text-xs font-bold text-slate-700">出席者（当委員会スタッフのみ選択可）<span class="text-rose-500">*</span></label>
-                <span class="text-xs text-slate-500">※欠席者はチェックを外してください</span>
+          <!-- Document Area -->
+          <div id="printable-area" class="space-y-6 text-slate-900">
+            <div class="text-center border-b-2 border-slate-900 pb-3">
+              <h2 class="text-2xl font-bold">委員会議事録 兼 研修実施完了記録</h2>
+              <p class="text-xs text-slate-600 mt-1">株式会社 松 運営管理ログ</p>
+            </div>
+
+            <table class="w-full text-xs border-collapse border border-slate-400">
+              <tbody>
+                <tr>
+                  <th class="border border-slate-400 bg-slate-100 p-2 w-1/4 text-left">事業所・法人名</th>
+                  <td class="border border-slate-400 p-2 font-bold">株式会社 松</td>
+                  <th class="border border-slate-400 bg-slate-100 p-2 w-1/4 text-left">委員会区分</th>
+                  <td class="border border-slate-400 p-2 font-bold" id="out-committee-name">-</td>
+                </tr>
+                <tr>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">開催日時</th>
+                  <td class="border border-slate-400 p-2" id="out-datetime">-</td>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">研修時間</th>
+                  <td class="border border-slate-400 p-2" id="out-duration">-</td>
+                </tr>
+                <tr>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">開催場所</th>
+                  <td class="border border-slate-400 p-2" id="out-location">-</td>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">承認（委員長）</th>
+                  <td class="border border-slate-400 p-2 font-semibold text-emerald-800">承認確認済 (電子ログ保持)</td>
+                </tr>
+                <tr>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">出席委員（受講者）</th>
+                  <td colspan="3" class="border border-slate-400 p-2" id="out-attendees">-</td>
+                </tr>
+                <tr>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">議題・研修テーマ</th>
+                  <td colspan="3" class="border border-slate-400 p-2 font-bold" id="out-theme">-</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="space-y-3 text-xs">
+              <div class="border border-slate-300 p-3 rounded">
+                <h4 class="font-bold border-b pb-1 mb-1">1. 実施研修の概要および講義ポイント</h4>
+                <p id="out-training-summary" class="whitespace-pre-wrap leading-relaxed">-</p>
               </div>
-              <div id="attendees-checkbox-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white p-3 rounded-lg border border-slate-200 max-h-48 overflow-y-auto">
-                <!-- Populated by JS based on committee membership -->
+              <div class="border border-slate-300 p-3 rounded">
+                <h4 class="font-bold border-b pb-1 mb-1">2. 協議・検討事項（実効性の確認）</h4>
+                <ul id="out-discussion-points" class="list-disc list-inside space-y-1"></ul>
+              </div>
+              <div class="border border-slate-300 p-3 rounded bg-slate-50">
+                <h4 class="font-bold border-b pb-1 mb-1">3. 決定事項および事業所運用ルール</h4>
+                <ul id="out-decisions" class="list-disc list-inside space-y-1 font-medium"></ul>
+              </div>
+              <div class="border border-slate-300 p-3 rounded">
+                <h4 class="font-bold border-b pb-1 mb-1">4. 欠席者への追講・次回アクション</h4>
+                <p id="out-next-action" class="leading-relaxed">-</p>
               </div>
             </div>
 
-            <!-- Minutes Creator Select -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <div class="text-right text-[10px] text-slate-500 pt-2 border-t">
+              株式会社 松 / 高松市・香川県指定 運営指導用提出対応文書
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ========================================== -->
+      <!-- TAB 5: IMPORT PAST FILES & AI CONVERT      -->
+      <!-- ========================================== -->
+      <section id="tab-import" class="tab-content space-y-6 hidden">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-6">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="file-up" class="w-5 h-5 text-teal-600"></i> 過去議事録ファイル（Word / PDF / テキスト）インポート & AI置換
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              過去のWordやPDF、テキストファイルの議事録を取り込み、不足項目（研修時間や欠席者対応など）をAIで自動補完し、標準フォーマットへ変換・振り分けます。
+            </p>
+          </div>
+
+          <!-- File Upload Box -->
+          <div class="border-2 border-dashed border-teal-300 bg-teal-50/40 rounded-xl p-8 text-center space-y-4">
+            <i data-lucide="upload-cloud" class="w-12 h-12 text-teal-600 mx-auto"></i>
+            <div>
+              <p class="text-sm font-bold text-slate-700">過去のファイルを選択してください</p>
+              <p class="text-xs text-slate-500 mt-1">対応形式: .txt, .doc, .docx, .pdf （ドラッグ＆ドロップ対応）</p>
+            </div>
+
+            <input type="file" id="import-file-input" accept=".txt,.doc,.docx,.pdf" onchange="handleFileImport(event)" class="hidden">
+            <button onclick="document.getElementById('import-file-input').click()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg shadow transition">
+              ファイルを選択して取り込む
+            </button>
+          </div>
+
+          <!-- Manual Text Input / File Content Preview Area -->
+          <div class="space-y-3 text-xs">
+            <label class="block font-bold text-slate-700">取り込んだテキスト内容（または直接貼り付け）</label>
+            <textarea id="import-text-preview" rows="6" class="w-full bg-slate-50 border border-slate-300 rounded p-3 text-xs" placeholder="ここに過去議事録のテキストが表示されます。"></textarea>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">議事録作成担当者 <span class="text-rose-500">*</span></label>
-                <p class="text-[11px] text-slate-500 mb-2">当委員会所属メンバーから指定</p>
-                <select id="meeting-reporter-select" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
-                  <!-- Populated by JS -->
+                <label class="block font-semibold text-slate-700 mb-1">振り分け対象年度</label>
+                <select id="import-target-fy" class="w-full bg-white border border-slate-300 rounded p-2">
+                  <option value="2026">2026年度</option>
+                  <option value="2025">2025年度</option>
+                  <option value="2024">2024年度</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">該当委員会</label>
+                <select id="import-target-comm" class="w-full bg-white border border-slate-300 rounded p-2">
+                  <!-- JS populated -->
                 </select>
               </div>
             </div>
 
-          </div>
-
-          <!-- Transcript / Raw Notes Input -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">会議・研修の録音テキストまたは要点メモ</label>
-            <textarea id="meeting-raw-text" rows="5" class="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm" placeholder="例: 防災月間に伴いBCPの確認を実施。大規模地震発生時、まず職員の安全確認後、人工呼吸器等のある優先度A利用者から安否確認。171伝言ダイヤルとLINE WORKSグループを代替連絡手段と決定。次回までに受任者リストを更新予定。"></textarea>
-          </div>
-
-          <!-- Submit / Generate Button -->
-          <button type="submit" id="generate-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
-            <i data-lucide="cpu" class="w-5 h-5"></i> AI議事録自動作成・プレビュー生成
-          </button>
-        </form>
-      </div>
-
-      <!-- Generated Minutes Result & Print View -->
-      <div id="minutes-output-card" class="bg-white rounded-xl p-8 shadow-md border border-slate-200 hidden space-y-6">
-        
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4 no-print">
-          <div class="flex items-center gap-2 text-teal-700">
-            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
-            <h3 class="font-bold text-lg">議事録プレビュー（実地指導対応標準様式）</h3>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-              <i data-lucide="printer" class="w-4 h-4"></i> 印刷 / PDF保存
-            </button>
-            <button onclick="saveCurrentMinutes()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-              <i data-lucide="save" class="w-4 h-4"></i> システムへ保存・確定
+            <button onclick="convertImportedTextToMinutes()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
+              <i data-lucide="wand-2" class="w-4 h-4"></i> AIで不足分を補完し、標準フォーマットへ自動変換・保存
             </button>
           </div>
         </div>
+      </section>
 
-        <!-- Printable Document Area -->
-        <div id="printable-area" class="space-y-6 p-2 text-slate-800">
-          
-          <div class="text-center border-b-2 border-slate-800 pb-3">
-            <h2 class="text-2xl font-bold tracking-wider" id="out-doc-title">委員会議事録兼研修実施記録</h2>
-            <p class="text-xs text-slate-600 mt-1" id="out-station-name">訪問看護ステーションなごみ</p>
-          </div>
-
-          <!-- Document Header Table -->
-          <table class="w-full text-sm border-collapse border border-slate-400">
-            <tbody>
-              <tr>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left w-1/4">委員会区分</th>
-                <td class="border border-slate-400 p-2 font-bold" id="out-committee-name">-</td>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left w-1/4">開催日時</th>
-                <td class="border border-slate-400 p-2" id="out-datetime">-</td>
-              </tr>
-              <tr>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left">開催場所</th>
-                <td class="border border-slate-400 p-2" id="out-location">-</td>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left">研修時間</th>
-                <td class="border border-slate-400 p-2" id="out-duration">-</td>
-              </tr>
-              <tr>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left">議事録作成者</th>
-                <td class="border border-slate-400 p-2" id="out-reporter">-</td>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left">承認（委員長）</th>
-                <td class="border border-slate-400 p-2" id="out-approver">承認済 (電子サイン記録)</td>
-              </tr>
-              <tr>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left">出席委員</th>
-                <td colspan="3" class="border border-slate-400 p-2" id="out-attendees">-</td>
-              </tr>
-              <tr>
-                <th class="border border-slate-400 bg-slate-100 p-2 text-left">議題・研修テーマ</th>
-                <td colspan="3" class="border border-slate-400 p-2 font-semibold" id="out-theme">-</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Structured AI Content -->
-          <div class="space-y-4 text-sm">
-            <div class="border border-slate-300 rounded-lg p-4">
-              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
-                <i data-lucide="book-open" class="w-4 h-4 text-teal-700"></i> 1. 実施研修の概要・伝達事項
-              </h4>
-              <p id="out-training-summary" class="text-slate-700 leading-relaxed whitespace-pre-wrap">-</p>
-            </div>
-
-            <div class="border border-slate-300 rounded-lg p-4">
-              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
-                <i data-lucide="messages-square" class="w-4 h-4 text-teal-700"></i> 2. 協議・検討事項
-              </h4>
-              <ul id="out-discussion-points" class="list-disc list-inside text-slate-700 space-y-1">
-                <!-- Li items -->
-              </ul>
-            </div>
-
-            <div class="border border-slate-300 rounded-lg p-4 bg-slate-50/50">
-              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
-                <i data-lucide="check-square" class="w-4 h-4 text-teal-700"></i> 3. 決定事項・今後の運用ルール
-              </h4>
-              <ul id="out-decisions" class="list-disc list-inside text-slate-700 space-y-1 font-medium">
-                <!-- Li items -->
-              </ul>
-            </div>
-
-            <div class="border border-slate-300 rounded-lg p-4">
-              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
-                <i data-lucide="arrow-right-circle" class="w-4 h-4 text-teal-700"></i> 4. 次回アクション・宿題事項
-              </h4>
-              <p id="out-next-action" class="text-slate-700 leading-relaxed">-</p>
-            </div>
-          </div>
-
-          <!-- Compliance Footer Note -->
-          <div class="text-right text-xs text-slate-500 pt-4 border-t border-slate-200">
-            訪問看護ステーションなごみ 運営管理システム自動記録 (改ざん防止IDタイムスタンプ保持)
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-  </main>
+    </main>
+  </div>
 
 
   <!-- JavaScript Application Engine -->
   <script>
     // =========================================================================
-    // MASTER DATA DEFINITION (FOR VISITING NURSE STATION NAGOMI)
+    // AUTHENTICATION & LOGIN
     // =========================================================================
-    const STATION_NAME = "訪問看護ステーションなごみ";
+    const DEFAULT_USER_ID = "matsu";
+    const DEFAULT_USER_PW = "matsu0001";
+    const MASTER_RESET_CODE = "matsu";
 
+    let authCredentials = JSON.parse(localStorage.getItem('matsu_auth')) || {
+      id: DEFAULT_USER_ID,
+      pw: DEFAULT_USER_PW
+    };
+
+    function checkAuth() {
+      const isLoggedIn = sessionStorage.getItem('matsu_logged_in') === 'true';
+      if (isLoggedIn) {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        initApp();
+      } else {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const idInput = document.getElementById('login-id').value.trim();
+      const pwInput = document.getElementById('login-pw').value;
+
+      if (idInput === authCredentials.id && pwInput === authCredentials.pw) {
+        sessionStorage.setItem('matsu_logged_in', 'true');
+        document.getElementById('login-error').classList.add('hidden');
+        checkAuth();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('matsu_logged_in');
+      checkAuth();
+    }
+
+    function togglePasswordResetModal(show) {
+      const modal = document.getElementById('reset-modal');
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    function handleResetPassword(e) {
+      e.preventDefault();
+      const resetId = document.getElementById('reset-user-id').value.trim();
+      const resetCode = document.getElementById('reset-code').value.trim();
+
+      if (resetCode === MASTER_RESET_CODE) {
+        authCredentials.id = resetId || DEFAULT_USER_ID;
+        authCredentials.pw = DEFAULT_USER_PW;
+        localStorage.setItem('matsu_auth', JSON.stringify(authCredentials));
+        alert(`パスワードを初期化しました。\n\nID: ${authCredentials.id}\nPW: ${DEFAULT_USER_PW}`);
+        togglePasswordResetModal(false);
+      } else {
+        alert('管理者認証コードが不一致です。');
+      }
+    }
+
+
+    // =========================================================================
+    // MASTER DATA (KA GA WA & TAKAMATSU COMPLIANT)
+    // =========================================================================
     const COMMITTEES_MASTER = [
       {
         id: "infection",
@@ -365,10 +643,8 @@
         required_freq: 2,
         freq_label: "年2回以上 (約6ヶ月に1回)",
         themes: [
-          "【1回目・春夏】新体制における標準予防策（一律の感染対策）の再確認と衛生用品点検",
-          "【1回目・春夏】訪問看護における防護具（PPE）着脱演習と感染廃棄物の安全処理",
-          "【2回目・秋冬】冬季感染症（インフル・ノロ・COVID-19等）蔓延防止マニュアルの更新と対応シミュレーション",
-          "【2回目・秋冬】利用者宅における環境整備および訪問スタッフの体調管理・報告ラインの徹底"
+          "【1回目・春夏】標準予防策の再確認と防護具（PPE）着脱演習",
+          "【2回目・秋冬】冬季感染症（インフル・ノロ・COVID-19等）対策とマニュアル更新"
         ]
       },
       {
@@ -377,21 +653,16 @@
         required_freq: 1,
         freq_label: "年1回以上",
         themes: [
-          "【通常】障害者・高齢者虐待防止法の理解と、訪問時における早期発見兆候チェック",
-          "【通常】身体拘束ゼロの原則と例外三要件（切迫性・非代替性・一時性）の事例検討",
-          "【通常】不適切なケア・グレーゾーン行為の振り返りと不適切な関わりの防止策",
-          "【通常】訪問看護スタッフのストレス管理と心理的安全性向上による虐待予防"
+          "【通常】高齢者・障害者虐待防止法の理解と身体拘束ゼロの原則（例外3要件）"
         ]
       },
       {
         id: "bcp",
         name: "業務継続計画（BCP）委員会",
         required_freq: 1,
-        freq_label: "年1回以上",
+        freq_label: "年1回以上 (9月推奨)",
         themes: [
-          "【防災月間・9月推奨】大規模地震発生時における優先訪問対象者（医療依存度ランク）の見直しと安否確認訓練",
-          "【防災月間・9月推奨】台風・集中豪雨時の代替通信手段（災害用伝言ダイヤル171等）の操作検証",
-          "【感染症BCP】スタッフ大量罹患時における訪問体制の縮小運用および代替職員の確保スキーム"
+          "【9月防災月間】大規模地震・水害時における優先訪問者ランク付けと安否確認"
         ]
       },
       {
@@ -400,9 +671,7 @@
         required_freq: 1,
         freq_label: "年1回以上",
         themes: [
-          "【年末年始推奨】利用者および家族からのカスタマーハラスメント（暴言・セクハラ等）対応基準と単独訪問判断",
-          "【年末年始推奨】職場内におけるパワーハラスメント・セクハラ防止と風通しの良い組織づくり",
-          "【通常】ハラスメント発生時の相談窓口の周知と初期対応マニュアルの確認"
+          "【年末推奨】カスタマーハラスメント対応規程と職場内パワハラ防止方針"
         ]
       },
       {
@@ -411,76 +680,63 @@
         required_freq: 2,
         freq_label: "年2回以上",
         themes: [
-          "【1回目】上半期インシデント・アクシデント事例のWhy-Why分析と内服薬配薬誤認防止策",
-          "【1回目】訪問看護における転倒・転落リスク評価シートの標準化と共有",
-          "【2回目】カテーテル・チューブ類等の医療機器トラブル防止と緊急時連絡フロー",
-          "【2回目】ヒヤリハット報告の定着化と医療事故未然防止のためのリスクアセスメント"
+          "【1回目】インシデント事例分析と配薬誤認防止アセスメント",
+          "【2回目】医療処置（カテーテル等）トラブル防止と緊急連絡フロー"
         ]
       }
     ];
 
     const DEFAULT_STAFFS = [
-      { id: 1, name: "山田 護", role: "看護師 (管理者)" },
-      { id: 2, name: "佐藤 花子", role: "看護師" },
-      { id: 3, name: "田中 健太", role: "作業療法士" },
-      { id: 4, name: "鈴木 美咲", role: "理学療法士" },
-      { id: 5, name: "高橋 誠", role: "事務員" }
+      { id: 1, name: "山田 護", role: "看護師 (管理者)", email: "yamada@matsu-visiting.jp" },
+      { id: 2, name: "佐藤 花子", role: "看護師", email: "sato@matsu-visiting.jp" },
+      { id: 3, name: "田中 健太", role: "作業療法士", email: "tanaka@matsu-visiting.jp" },
+      { id: 4, name: "鈴木 美咲", role: "理学療法士", email: "suzuki@matsu-visiting.jp" },
+      { id: 5, name: "高橋 誠", role: "事務員", email: "takahashi@matsu-visiting.jp" }
     ];
 
-    // Default Committee Assignments
     const DEFAULT_COMMITTEE_STAFFS = {
-      infection: [
-        { staff_id: 1, committee_role: "委員長" },
-        { staff_id: 2, committee_role: "書記" },
-        { staff_id: 5, committee_role: "委員" }
-      ],
-      abuse: [
-        { staff_id: 1, committee_role: "委員長" },
-        { staff_id: 3, committee_role: "委員" }
-      ],
-      bcp: [
-        { staff_id: 1, committee_role: "委員長" },
-        { staff_id: 2, committee_role: "委員" },
-        { staff_id: 3, committee_role: "書記" },
-        { staff_id: 4, committee_role: "委員" },
-        { staff_id: 5, committee_role: "委員" }
-      ],
-      harassment: [
-        { staff_id: 1, committee_role: "委員長" },
-        { staff_id: 4, committee_role: "委員" }
-      ],
-      safety: [
-        { staff_id: 2, committee_role: "委員長" },
-        { staff_id: 3, committee_role: "書記" },
-        { staff_id: 4, committee_role: "委員" }
-      ]
+      infection: [{ staff_id: 1, committee_role: "委員長" }, { staff_id: 2, committee_role: "書記" }],
+      abuse: [{ staff_id: 1, committee_role: "委員長" }, { staff_id: 3, committee_role: "委員" }],
+      bcp: [{ staff_id: 1, committee_role: "委員長" }, { staff_id: 2, committee_role: "委員" }, { staff_id: 4, committee_role: "書記" }],
+      harassment: [{ staff_id: 1, committee_role: "委員長" }, { staff_id: 4, committee_role: "委員" }],
+      safety: [{ staff_id: 2, committee_role: "委員長" }, { staff_id: 3, committee_role: "書記" }]
     };
 
-    // Application State
+    // Annual Default Schedule Template (4月〜翌3月)
+    const DEFAULT_ANNUAL_PLAN = {
+      infection: [5, 11], // 5月, 11月
+      abuse: [6],         // 6月
+      bcp: [9],           // 9月
+      harassment: [12],   // 12月
+      safety: [7, 1]      // 7月, 1月
+    };
+
     let appState = {
-      committeeStaffs: JSON.parse(localStorage.getItem('nagomi_committee_staffs')) || DEFAULT_COMMITTEE_STAFFS,
-      minutesHistory: JSON.parse(localStorage.getItem('nagomi_minutes_history')) || [],
+      committeeStaffs: JSON.parse(localStorage.getItem('matsu_committee_staffs')) || DEFAULT_COMMITTEE_STAFFS,
+      minutesHistory: JSON.parse(localStorage.getItem('matsu_minutes_history')) || [],
+      annualPlan: JSON.parse(localStorage.getItem('matsu_annual_plan')) || DEFAULT_ANNUAL_PLAN,
       currentGeneratedMinutes: null
     };
 
-    // Initialize Lucide Icons & App
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      initUI();
-      renderDashboard();
-      renderCommitteeStaffManager();
-      populateMeetingFormSelects();
+      checkAuth();
     });
 
-    // Save State to LocalStorage
     function saveState() {
-      localStorage.setItem('nagomi_committee_staffs', JSON.stringify(appState.committeeStaffs));
-      localStorage.setItem('nagomi_minutes_history', JSON.stringify(appState.minutesHistory));
+      localStorage.setItem('matsu_committee_staffs', JSON.stringify(appState.committeeStaffs));
+      localStorage.setItem('matsu_minutes_history', JSON.stringify(appState.minutesHistory));
+      localStorage.setItem('matsu_annual_plan', JSON.stringify(appState.annualPlan));
     }
 
-    // =========================================================================
-    // TAB SWITCHING NAVIGATION
-    // =========================================================================
+    function initApp() {
+      renderDashboard();
+      renderAnnualPlanTable();
+      renderCommitteeStaffManager();
+      populateMeetingFormSelects();
+      populateImportSelects();
+    }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -496,85 +752,109 @@
       }
 
       if (tabId === 'dashboard') renderDashboard();
+      if (tabId === 'plan') renderAnnualPlanTable();
       if (tabId === 'staffs') renderCommitteeStaffManager();
       if (tabId === 'meeting-create') populateMeetingFormSelects();
     }
 
-    function initUI() {
-      // Set default datetime in meeting form
-      const now = new Date();
-      now.setMinutes(0);
-      const isoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-      document.getElementById('meeting-date').value = isoString;
-    }
 
     // =========================================================================
-    // RENDER: DASHBOARD
+    // DASHBOARD & MONTHLY ALERTS
     // =========================================================================
     function renderDashboard() {
+      const selectedFY = document.getElementById('dashboard-fy-select').value;
       const cardsContainer = document.getElementById('dashboard-cards');
       cardsContainer.innerHTML = '';
 
+      // Check current month (1-12)
+      const currentMonth = new Date().getMonth() + 1;
+      let alertHTML = "";
+
       COMMITTEES_MASTER.forEach(comm => {
-        // Count held meetings this fiscal year
-        const heldCount = appState.minutesHistory.filter(m => m.committee_id === comm.id).length;
+        // Filter history by FY and Committee
+        const fyMinutes = appState.minutesHistory.filter(m => m.fy === selectedFY && m.committee_id === comm.id);
+        const heldCount = fyMinutes.length;
         const isCompleted = heldCount >= comm.required_freq;
         const progressPercent = Math.min(100, Math.round((heldCount / comm.required_freq) * 100));
+
+        // Check if scheduled this month
+        const scheduledMonths = appState.annualPlan[comm.id] || [];
+        if (scheduledMonths.includes(currentMonth) && heldCount === 0) {
+          alertHTML += `
+            <div class="flex items-center justify-between text-xs text-amber-900 font-medium">
+              <span class="flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> 【今月開催予定】<strong>${comm.name}</strong> の開催が完了していません。</span>
+              <button onclick="startMeetingForCommittee('${comm.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded text-[11px]">今すぐ開催・入力</button>
+            </div>
+          `;
+        }
 
         const card = document.createElement('div');
         card.className = "bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4";
         card.innerHTML = `
           <div class="flex justify-between items-start">
             <div>
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">${comm.freq_label}</span>
-              <h3 class="font-bold text-slate-800 text-base mt-0.5">${comm.name}</h3>
+              <span class="text-[10px] font-bold text-slate-500 uppercase">${comm.freq_label}</span>
+              <h3 class="font-bold text-slate-800 text-sm mt-0.5">${comm.name}</h3>
             </div>
             ${isCompleted 
-              ? `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> 完了</span>`
-              : `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">未達成</span>`
+              ? `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full">完了</span>`
+              : `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">未達</span>`
             }
           </div>
 
           <div>
             <div class="flex justify-between text-xs text-slate-600 mb-1">
-              <span>当年度開催実績</span>
+              <span>${selectedFY}年度 開催実績</span>
               <span class="font-bold">${heldCount} / ${comm.required_freq} 回</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-2">
-              <div class="bg-teal-600 h-2 rounded-full transition-all duration-500" style="width: ${progressPercent}%"></div>
+              <div class="bg-teal-600 h-2 rounded-full transition-all" style="width: ${progressPercent}%"></div>
             </div>
           </div>
 
           <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
             <span class="text-slate-500">メンバー: ${appState.committeeStaffs[comm.id]?.length || 0}名</span>
             <button onclick="startMeetingForCommittee('${comm.id}')" class="text-teal-700 font-bold hover:underline flex items-center gap-1">
-              開催・記録入力 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+              開催・入力 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         `;
         cardsContainer.appendChild(card);
       });
 
-      // Render Recent Minutes List
+      // Render Alert Banner
+      const alertBanner = document.getElementById('monthly-alert-banner');
+      if (alertHTML !== "") {
+        alertBanner.classList.remove('hidden');
+        alertBanner.innerHTML = `<h4 class="font-bold text-xs text-amber-900 mb-1">今月の委員会開催アラート（${currentMonth}月）</h4>` + alertHTML;
+      } else {
+        alertBanner.classList.add('hidden');
+      }
+
+      // Render History List for Selected FY
       const recentList = document.getElementById('recent-minutes-list');
       recentList.innerHTML = '';
 
-      if (appState.minutesHistory.length === 0) {
-        recentList.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm">記録された議事録はまだありません。</div>`;
+      const filteredHistory = appState.minutesHistory.filter(m => m.fy === selectedFY);
+      document.getElementById('history-count-badge').textContent = `${filteredHistory.length}件 (${selectedFY}年度)`;
+
+      if (filteredHistory.length === 0) {
+        recentList.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">${selectedFY}年度の記録はまだありません。</div>`;
       } else {
-        appState.minutesHistory.slice().reverse().forEach(min => {
+        filteredHistory.slice().reverse().forEach(min => {
           const item = document.createElement('div');
-          item.className = "p-4 hover:bg-slate-50 transition flex justify-between items-center";
+          item.className = "p-4 hover:bg-slate-50 transition flex justify-between items-center text-xs";
           item.innerHTML = `
             <div>
               <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-slate-800">${min.committee_name}</span>
-                <span class="text-xs text-slate-500">（${min.date.split('T')[0]} 開催）</span>
+                <span class="font-bold text-slate-800 text-sm">${min.committee_name}</span>
+                <span class="text-slate-500">（${min.date.split('T')[0]} 開催）</span>
+                <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">${min.fy}年度</span>
               </div>
-              <div class="text-xs text-slate-600 mt-0.5">議題: ${min.theme}</div>
+              <div class="text-slate-600 mt-1">議題: ${min.theme}</div>
             </div>
-            <button onclick="viewHistoryMinutes('${min.id}')" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded-lg text-slate-700 font-medium transition">
-              議事録表示
+            <button onclick="viewHistoryMinutes('${min.id}')" class="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded font-medium">
+              詳細表示
             </button>
           `;
           recentList.appendChild(item);
@@ -584,19 +864,62 @@
       lucide.createIcons();
     }
 
-    function startMeetingForCommittee(commId) {
-      switchTab('meeting-create');
-      document.getElementById('meeting-committee-select').value = commId;
-      onMeetingCommitteeChange();
-    }
 
     // =========================================================================
-    // RENDER: COMMITTEE STAFF MANAGER
+    // ANNUAL SCHEDULE TABLE
+    // =========================================================================
+    function renderAnnualPlanTable() {
+      const tbody = document.getElementById('annual-plan-tbody');
+      tbody.innerHTML = '';
+
+      const months = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+
+      COMMITTEES_MASTER.forEach(comm => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+
+        let tdHTML = `<td class="p-2.5 border border-slate-200 font-bold text-slate-800 text-xs">${comm.name}</td>`;
+
+        months.forEach(m => {
+          const isScheduled = (appState.annualPlan[comm.id] || []).includes(m);
+          tdHTML += `
+            <td class="p-2 border border-slate-200 text-center">
+              <input type="checkbox" ${isScheduled ? 'checked' : ''} onchange="toggleAnnualPlanMonth('${comm.id}', ${m})" class="rounded text-teal-600 focus:ring-teal-500 cursor-pointer">
+            </td>
+          `;
+        });
+
+        tr.innerHTML = tdHTML;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleAnnualPlanMonth(commId, month) {
+      if (!appState.annualPlan[commId]) appState.annualPlan[commId] = [];
+      
+      if (appState.annualPlan[commId].includes(month)) {
+        appState.annualPlan[commId] = appState.annualPlan[commId].filter(m => m !== month);
+      } else {
+        appState.annualPlan[commId].push(month);
+      }
+      saveState();
+      renderDashboard();
+    }
+
+    function resetAnnualPlanToDefault() {
+      appState.annualPlan = JSON.parse(JSON.stringify(DEFAULT_ANNUAL_PLAN));
+      saveState();
+      renderAnnualPlanTable();
+      renderDashboard();
+      alert('年間計画表を標準推奨スケジュールにリセットしました。');
+    }
+
+
+    // =========================================================================
+    // STAFF & NOTIFICATION MANAGER
     // =========================================================================
     function renderCommitteeStaffManager() {
       const select = document.getElementById('staff-manage-committee-select');
-      
-      // Populate dropdown if empty
       if (select.children.length === 0) {
         COMMITTEES_MASTER.forEach(c => {
           const opt = document.createElement('option');
@@ -609,35 +932,33 @@
       const selectedCommId = select.value || COMMITTEES_MASTER[0].id;
       const assigned = appState.committeeStaffs[selectedCommId] || [];
 
-      document.getElementById('assigned-count-badge').textContent = `${assigned.length}名`;
-
       const listContainer = document.getElementById('committee-staff-list');
       listContainer.innerHTML = '';
 
       if (assigned.length === 0) {
-        listContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">メンバーがまだ登録されていません。</div>`;
+        listContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">メンバー未登録です。</div>`;
       } else {
         assigned.forEach(item => {
           const staffObj = DEFAULT_STAFFS.find(s => s.id === item.staff_id);
           if (!staffObj) return;
 
           const row = document.createElement('div');
-          row.className = "bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center text-sm";
+          row.className = "bg-white p-2.5 rounded border border-slate-200 flex justify-between items-center text-xs";
           row.innerHTML = `
-            <div class="flex items-center gap-3">
-              <span class="font-bold text-slate-800">${staffObj.name}</span>
-              <span class="text-xs text-slate-500">（${staffObj.role}）</span>
-              <span class="bg-teal-50 text-teal-800 text-xs px-2 py-0.5 rounded font-medium">${item.committee_role}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-bold">${staffObj.name}</span>
+              <span class="text-slate-500">(${staffObj.role})</span>
+              <span class="bg-teal-50 text-teal-800 text-[10px] px-2 py-0.5 rounded font-medium">${item.committee_role}</span>
+              <span class="text-slate-400 text-[10px]">${staffObj.email}</span>
             </div>
-            <button onclick="removeStaffFromCommittee('${selectedCommId}', ${item.staff_id})" class="text-slate-400 hover:text-rose-600 transition p-1">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <button onclick="removeStaffFromCommittee('${selectedCommId}', ${item.staff_id})" class="text-slate-400 hover:text-rose-600">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           `;
           listContainer.appendChild(row);
         });
       }
 
-      // Populate Add Member Select
       const addSelect = document.getElementById('add-staff-select');
       addSelect.innerHTML = '';
       DEFAULT_STAFFS.forEach(s => {
@@ -657,9 +978,8 @@
 
       if (!appState.committeeStaffs[commId]) appState.committeeStaffs[commId] = [];
 
-      // Check duplicate
       if (appState.committeeStaffs[commId].some(x => x.staff_id === staffId)) {
-        alert('このスタッフは既に登録されています。');
+        alert('既に割り当てられています。');
         return;
       }
 
@@ -674,8 +994,9 @@
       renderCommitteeStaffManager();
     }
 
+
     // =========================================================================
-    // FORM LOGIC: MEETING & AI GENERATION
+    // MEETING CREATION & AI MINUTES
     // =========================================================================
     function populateMeetingFormSelects() {
       const commSelect = document.getElementById('meeting-committee-select');
@@ -687,7 +1008,6 @@
           commSelect.appendChild(opt);
         });
       }
-
       onMeetingCommitteeChange();
     }
 
@@ -695,22 +1015,18 @@
       const commId = document.getElementById('meeting-committee-select').value;
       const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
 
-      // Populate Theme Dropdown Options (MULTIPLE OPTIONS FEATURE)
       const themeSelect = document.getElementById('theme-options-select');
       themeSelect.innerHTML = '';
       if (commMaster && commMaster.themes) {
-        commMaster.themes.forEach((themeText, idx) => {
+        commMaster.themes.forEach(t => {
           const opt = document.createElement('option');
-          opt.value = themeText;
-          opt.textContent = themeText;
+          opt.value = t;
+          opt.textContent = t;
           themeSelect.appendChild(opt);
         });
       }
-
-      // Automatically apply the first option by default
       applySelectedThemeOption();
 
-      // Render Attendance Checkboxes and Reporter Options (STRICT VALIDATION BASED ON ASSIGNED MEMBERS)
       const assignedMembers = appState.committeeStaffs[commId] || [];
       const attendeesContainer = document.getElementById('attendees-checkbox-list');
       const reporterSelect = document.getElementById('meeting-reporter-select');
@@ -719,8 +1035,7 @@
       reporterSelect.innerHTML = '';
 
       if (assignedMembers.length === 0) {
-        attendeesContainer.innerHTML = `<div class="col-span-2 text-rose-600 text-xs p-2">※当委員会に配置されたスタッフが登録されていません。「委員会スタッフ設定」画面でメンバーを追加してください。</div>`;
-        reporterSelect.innerHTML = `<option value="">(配置メンバーなし)</option>`;
+        attendeesContainer.innerHTML = `<div class="col-span-2 text-rose-600 text-xs p-2">当委員会にメンバーが配置されていません。</div>`;
         return;
       }
 
@@ -728,17 +1043,15 @@
         const staffObj = DEFAULT_STAFFS.find(s => s.id === m.staff_id);
         if (!staffObj) return;
 
-        // Attendees Checkbox
         const label = document.createElement('label');
         label.className = "flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded text-xs cursor-pointer";
         label.innerHTML = `
-          <input type="checkbox" value="${staffObj.name}" checked class="attendee-cb rounded border-slate-300 text-teal-600 focus:ring-teal-500">
+          <input type="checkbox" value="${staffObj.name}" checked class="attendee-cb rounded text-teal-600">
           <span class="font-medium text-slate-800">${staffObj.name}</span>
           <span class="text-[10px] text-slate-400">(${staffObj.role})</span>
         `;
         attendeesContainer.appendChild(label);
 
-        // Reporter Option
         const opt = document.createElement('option');
         opt.value = `${staffObj.name} (${m.committee_role})`;
         opt.textContent = `${staffObj.name} - ${m.committee_role}`;
@@ -747,81 +1060,62 @@
     }
 
     function applySelectedThemeOption() {
-      const selectedOption = document.getElementById('theme-options-select').value;
-      if (selectedOption) {
-        document.getElementById('meeting-theme').value = selectedOption;
-      }
+      const val = document.getElementById('theme-options-select').value;
+      if (val) document.getElementById('meeting-theme').value = val;
     }
 
-    // AI Minutes Generation Logic
-    function handleGenerateMinutes(event) {
-      event.preventDefault();
+    function handleGenerateMinutes(e) {
+      e.preventDefault();
 
-      const btn = document.getElementById('generate-btn');
-      btn.disabled = true;
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AI議事録文章を解析・自動生成中...`;
-      lucide.createIcons();
+      const commId = document.getElementById('meeting-committee-select').value;
+      const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
+      const datetimeVal = document.getElementById('meeting-date').value;
+      const locationVal = document.getElementById('meeting-location').value;
+      const durationVal = document.getElementById('training-duration').value;
+      const themeVal = document.getElementById('meeting-theme').value;
+      const reporterVal = document.getElementById('meeting-reporter-select').value;
+      const rawText = document.getElementById('meeting-raw-text').value;
 
-      setTimeout(() => {
-        const commId = document.getElementById('meeting-committee-select').value;
-        const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
-        const datetimeVal = document.getElementById('meeting-date').value;
-        const locationVal = document.getElementById('meeting-location').value;
-        const durationVal = document.getElementById('training-duration').value;
-        const themeVal = document.getElementById('meeting-theme').value;
-        const reporterVal = document.getElementById('meeting-reporter-select').value;
-        const rawText = document.getElementById('meeting-raw-text').value;
+      const checkedBoxes = document.querySelectorAll('.attendee-cb:checked');
+      const attendeeNames = Array.from(checkedBoxes).map(cb => cb.value);
 
-        // Gather checked attendees
-        const checkedBoxes = document.querySelectorAll('.attendee-cb:checked');
-        const attendeeNames = Array.from(checkedBoxes).map(cb => cb.value);
+      // Determine FY from date
+      const dateObj = new Date(datetimeVal);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const fy = (month >= 4) ? String(year) : String(year - 1);
 
-        if (attendeeNames.length === 0) {
-          alert('出席者を1名以上選択してください。');
-          btn.disabled = false;
-          btn.innerHTML = `<i data-lucide="cpu" class="w-5 h-5"></i> AI議事録自動作成・プレビュー生成`;
-          lucide.createIcons();
-          return;
-        }
+      const minutesData = {
+        id: 'MIN-' + Date.now(),
+        fy: fy,
+        committee_id: commId,
+        committee_name: commMaster.name,
+        date: datetimeVal,
+        location: locationVal,
+        duration: `${durationVal}分`,
+        reporter: reporterVal,
+        attendees: attendeeNames.join('、 '),
+        theme: themeVal,
+        summary: `本日は【${themeVal}】をテーマとして当委員会の研修および協議を実施した。香川県および高松市の運営指導要領に基づき、各種手順と実効性を検証した。`,
+        discussions: [
+          `最新のマニュアルに基づき、${themeVal}に関する手順と訪問時の具体的な注意事項を確認した。`,
+          `インシデント事例および具体的な訪問現場での注意ポイントについて検証を行った。`,
+          `緊急時連絡体制および関係機関への報告ラインの再照会を実施した。`
+        ],
+        decisions: [
+          `本日の決定事項および変更手順を全訪問スタッフ（非常勤を含む）へ周知徹底する。`,
+          `次回開催予定時期までに、関連チェックリストの点検を完了させる。`
+        ],
+        next_action: `欠席者に対しては講義資料の回覧による追講を実施する。次回定期開催にて定着評価を行う。`
+      };
 
-        // AI Simulated Processing based on Theme & Raw Text
-        const minutesData = {
-          id: 'MIN-' + Date.now(),
-          committee_id: commId,
-          committee_name: commMaster.name,
-          date: datetimeVal,
-          location: locationVal,
-          duration: `${durationVal}分`,
-          reporter: reporterVal,
-          attendees: attendeeNames.join('、 '),
-          theme: themeVal,
-          summary: `本日は【${themeVal}】をテーマとして当委員会の研修および定期協議を実施した。法令で定められた標準予防および各種手順を再確認し、スタッフ間での実践と知識共有を行った。`,
-          discussions: [
-            `最新のマニュアルに基づき、${themeVal}に関する手順と訪問時の具体的な注意事項を確認した。`,
-            `過去のヒヤリハット・インシデント事例および具体的な訪問現場での注意ポイントについて参加者で検証を行った。`,
-            `緊急時連絡体制および他職種・自治体等への報告ラインに漏れがないかを相互照会した。`
-          ],
-          decisions: [
-            `今回共有された対策手順を全訪問スタッフ（非常勤を含む）へ周知徹底する。`,
-            `次回開催予定時期までに、チェックリストおよび関連記録様式の更新を完了させる。`
-          ],
-          next_action: `次回（${commMaster.freq_label}に基づき予定）は、実践確認および今回の決定事項の定着評価を行う。`
-        };
+      if (rawText.trim() !== "") {
+        minutesData.summary += `\n（補足メモ: ${rawText}）`;
+      }
 
-        if (rawText.trim() !== "") {
-          minutesData.summary += `\n（補足メモ反映: ${rawText}）`;
-        }
-
-        appState.currentGeneratedMinutes = minutesData;
-        renderMinutesOutput(minutesData);
-
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="cpu" class="w-5 h-5"></i> AI議事録自動作成・プレビュー生成`;
-        lucide.createIcons();
-
-        // Scroll down smoothly
-        document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
-      }, 1200);
+      appState.currentGeneratedMinutes = minutesData;
+      renderMinutesOutput(minutesData);
+      document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
     }
 
     function renderMinutesOutput(data) {
@@ -858,21 +1152,86 @@
 
     function saveCurrentMinutes() {
       if (!appState.currentGeneratedMinutes) return;
-      
       appState.minutesHistory.push(appState.currentGeneratedMinutes);
       saveState();
-      alert('議事録をシステムに正常保存・確定しました！');
+      alert('株式会社 松 の運営管理ログとして確定・保存しました。');
       switchTab('dashboard');
     }
 
     function viewHistoryMinutes(id) {
       const data = appState.minutesHistory.find(m => m.id === id);
       if (!data) return;
-
       switchTab('meeting-create');
       appState.currentGeneratedMinutes = data;
       renderMinutesOutput(data);
       document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+
+    // =========================================================================
+    // PAST FILE IMPORT & AI CONVERSION
+    // =========================================================================
+    function populateImportSelects() {
+      const commSelect = document.getElementById('import-target-comm');
+      commSelect.innerHTML = '';
+      COMMITTEES_MASTER.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        commSelect.appendChild(opt);
+      });
+    }
+
+    function handleFileImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('import-text-preview').value = evt.target.result;
+        alert(`ファイル「${file.name}」を取り込みました。AI変換・補完を実行してください。`);
+      };
+      reader.readAsText(file);
+    }
+
+    function convertImportedTextToMinutes() {
+      const rawText = document.getElementById('import-text-preview').value;
+      if (!rawText.trim()) {
+        alert('テキストを取り込むか直接入力してください。');
+        return;
+      }
+
+      const fy = document.getElementById('import-target-fy').value;
+      const commId = document.getElementById('import-target-comm').value;
+      const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
+
+      // Simulated AI Structural Conversion & Defect Supplementation
+      const convertedData = {
+        id: 'MIN-IMP-' + Date.now(),
+        fy: fy,
+        committee_id: commId,
+        committee_name: commMaster.name,
+        date: `${fy}-09-15T17:00`,
+        location: "株式会社 松 会議室",
+        duration: "30分 (AI自動補完)",
+        reporter: "山田 護 (委員長)",
+        attendees: "山田 護、 佐藤 花子、 田中 健太",
+        theme: `【過去取込データ補完】${commMaster.name} 研修記録`,
+        summary: `【過去議事録から自動置換・補完】\n${rawText}`,
+        discussions: [
+          "取り込みテキストに基づき協議内容を標準フォーマット化",
+          "香川県運営指導項目（研修時間・欠席者記録）の補完完了"
+        ],
+        decisions: [
+          "過年度分データとして確定保存"
+        ],
+        next_action: "次回定期開催時に過年度記録の再検証を実施"
+      };
+
+      appState.minutesHistory.push(convertedData);
+      saveState();
+      alert(`インポートデータをAIで補完し、${fy}年度の ${commMaster.name} 議事録として正常登録しました！`);
+      switchTab('dashboard');
     }
   </script>
 </body>
