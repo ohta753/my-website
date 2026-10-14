@@ -1,946 +1,879 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>訪問看護 委員会・研修管理システム</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
-        body {
-            font-family: 'Noto Sans JP', 'Inter', sans-serif;
-            background-color: #f4f7f6;
-        }
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; color: black; font-size: 12pt; }
-            .print-card { border: none !important; shadow: none !important; padding: 0 !important; }
-        }
-        .print-only { display: none; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>委員会管理・研修記録システム - 訪問看護ステーションなごみ</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white; color: black; font-size: 12pt; }
+      .card { border: none !important; shadow: none !important; padding: 0 !important; }
+    }
+    .print-only { display: none; }
+  </style>
 </head>
-<body class="text-slate-800 flex flex-col min-h-screen">
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
 
-    <header class="bg-teal-700 text-white shadow-md no-print">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="bg-white text-teal-700 p-2 rounded-lg font-bold text-xl shadow">
-                    <i class="fa-solid font-bold fa-user-nurse"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">訪問看護委員会・研修自動管理システム</h1>
-                    <p class="text-xs text-teal-200">実地指導対応 / AI議事録生成統合プラットフォーム</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2 text-sm">
-                <span class="bg-teal-800 px-3 py-1 rounded-full text-teal-100 flex items-center gap-1">
-                    <i class="fa-solid fa-hospital"></i> 訪問看護ステーションなごみ
-                </span>
-                <span class="bg-teal-900 px-3 py-1 rounded-full text-teal-200 text-xs">2026年度</span>
-            </div>
+  <!-- Header / Navigation -->
+  <header class="bg-teal-700 text-white shadow-md no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="clipboard-check" class="w-8 h-8 text-teal-200"></i>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">委員会管理・研修記録システム</h1>
+          <p class="text-xs text-teal-100">訪問看護ステーションなごみ</p>
         </div>
-        <!-- Tab Navigation -->
-        <nav class="bg-teal-800 px-4 text-sm font-medium">
-            <div class="max-w-7xl mx-auto flex space-x-1 overflow-x-auto">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn py-2.5 px-4 rounded-t-lg transition flex items-center gap-2 border-b-2 border-amber-400 text-amber-300 bg-teal-900/50">
-                    <i class="fa-solid fa-chart-pie"></i> ダッシュボード
-                </button>
-                <button onclick="switchTab('meeting-new')" id="tab-meeting-new" class="tab-btn py-2.5 px-4 rounded-t-lg transition flex items-center gap-2 text-teal-100 hover:bg-teal-700">
-                    <i class="fa-solid fa-pen-to-square"></i> 会議・AI議事録作成
-                </button>
-                <button onclick="switchTab('staff-mgmt')" id="tab-staff-mgmt" class="tab-btn py-2.5 px-4 rounded-t-lg transition flex items-center gap-2 text-teal-100 hover:bg-teal-700">
-                    <i class="fa-solid fa-users-gear"></i> スタッフ・委員会割り当て
-                </button>
-                <button onclick="switchTab('minutes-history')" id="tab-minutes-history" class="tab-btn py-2.5 px-4 rounded-t-lg transition flex items-center gap-2 text-teal-100 hover:bg-teal-700">
-                    <i class="fa-solid fa-file-invoice"></i> 議事録一覧・PDF出力
-                </button>
-            </div>
-        </nav>
-    </header>
-
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
-
-        <!-- ================= TAB 1: DASHBOARD ================= -->
-        <div id="view-dashboard" class="space-y-6">
-            <!-- Alert Banner -->
-            <div id="dashboard-alert" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm flex items-start justify-between">
-                <div class="flex items-start space-x-3">
-                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xl mt-0.5"></i>
-                    <div>
-                        <h4 class="font-bold text-amber-800">9月実施推奨：業務継続計画（BCP）委員会の開催期限が近づいています</h4>
-                        <p class="text-xs text-amber-700 mt-1">法定制限に基づき、年1回以上の開催および研修が義務付けられています。推奨テーマ案を確認して開催を登録してください。</p>
-                    </div>
-                </div>
-                <button onclick="quickStartMeeting('bcp')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded shadow transition font-medium whitespace-nowrap">
-                    今すぐ会議を作成
-                </button>
-            </div>
-
-            <!-- Stats Overview Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">全体の年間達成率</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-total-progress">71.4%</h3>
-                        <p class="text-xs text-teal-600 mt-1"><i class="fa-solid fa-circle-check"></i> 全7回中 5回完了</p>
-                    </div>
-                    <div class="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 text-2xl font-bold">
-                        <i class="fa-solid fa-award"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">当月の推奨委員会</p>
-                        <h3 class="text-lg font-bold text-amber-700 mt-1">BCP（業務継続計画）</h3>
-                        <p class="text-xs text-slate-500 mt-1">防災月間にあわせた訓練・見直し</p>
-                    </div>
-                    <div class="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 text-2xl font-bold">
-                        <i class="fa-solid fa-shield-cat"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">登録スタッフ数</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-staff-count">8名</h3>
-                        <p class="text-xs text-slate-500 mt-1">全委員会へアサイン完了</p>
-                    </div>
-                    <div class="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-2xl font-bold">
-                        <i class="fa-solid fa-user-group"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Committee List Cards -->
-            <div>
-                <h3 class="text-base font-bold text-slate-700 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-teal-600"></i> 法定5委員会 開催・進捗管理状況
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="committee-cards-container">
-                    <!-- Cards dynamically injected via JS -->
-                </div>
-            </div>
-
-            <!-- Recommended Topics Engine -->
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-base font-bold text-slate-700 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-lightbulb text-amber-500"></i> 訪問看護の実地指導対策：今期おすすめ研修テーマ
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="recommended-topics-container">
-                    <!-- Recommendations dynamically injected -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= TAB 2: NEW MEETING & AI MINUTES ================= -->
-        <div id="view-meeting-new" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-800">新規委員会開催 & AI議事録作成</h2>
-                        <p class="text-xs text-slate-500">委員会を選択すると専任メンバーが自動選出されます。</p>
-                    </div>
-                    <span class="bg-teal-100 text-teal-800 text-xs px-3 py-1 rounded-full font-medium">実地指導基準準拠</span>
-                </div>
-
-                <form id="meeting-form" onsubmit="handleGenerateMinutes(event)" class="space-y-6">
-                    <!-- Section 1: Basic Info -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">対象委員会 <span class="text-red-500">*</span></label>
-                            <select id="meeting-committee-select" onchange="onCommitteeSelectChange()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                                <!-- Options dynamically rendered -->
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">開催日時 <span class="text-red-500">*</span></label>
-                            <input type="datetime-local" id="meeting-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">開催場所</label>
-                            <input type="text" id="meeting-location" value="ステーション カンファレンスルーム" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" required>
-                        </div>
-                    </div>
-
-                    <!-- Section 2: Recommended Agenda Selector -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">議題・研修テーマ <span class="text-red-500">*</span></label>
-                        <div class="flex gap-2">
-                            <input type="text" id="meeting-title" placeholder="例: 冬季インフルエンザ・ノロウイルス蔓延防止策と標準予防策" class="flex-1 border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" required>
-                            <button type="button" onclick="applyPresetTopic()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap border border-slate-300">
-                                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 定番案を適用
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Section 3: Committee Dedicated Members Validation Panel -->
-                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                <i class="fa-solid fa-user-shield text-teal-600"></i> 出席者・議事録作成者の選択 
-                                <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded font-normal">※当委員会の配属スタッフのみ表示中</span>
-                            </h4>
-                            <span class="text-xs text-slate-500" id="committee-staff-count-badge">配属: 0名</span>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Attendees List -->
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">出席メンバー (チェック必須)</label>
-                                <div id="attendees-checkbox-list" class="bg-white border border-slate-200 rounded-lg p-2.5 max-h-36 overflow-y-auto space-y-1.5 text-xs">
-                                    <!-- Dynamic checkboxes -->
-                                </div>
-                            </div>
-
-                            <!-- Minutes Creator Selection -->
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">議事録作成担当者 <span class="text-red-500">*</span></label>
-                                <select id="meeting-creator-select" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                                    <!-- Dynamic staff select -->
-                                </select>
-                                <p class="text-[10px] text-slate-400 mt-1">※委員会規定により、当委員会に割り当てられたスタッフのみが議事録作成者として指定可能です。</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 4: AI Text / Transcript Simulation Input -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-xs font-bold text-slate-700">会議メモ / 録音テキスト・音声起こし入力 <span class="text-red-500">*</span></label>
-                            <button type="button" onclick="insertSampleTranscript()" class="text-xs text-teal-600 hover:text-teal-800 font-medium">
-                                <i class="fa-solid fa-file-code"></i> テスト用会議メモを自動入力
-                            </button>
-                        </div>
-                        <textarea id="meeting-raw-input" rows="5" placeholder="会議中または研修中の会話・要点メモを入力してください。AIが法令遵守フォーマットに自動で要約・整理します。" class="w-full border border-slate-300 rounded-lg p-3 text-xs leading-relaxed focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono" required></textarea>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="flex justify-end space-x-3 border-t border-slate-200 pt-4">
-                        <button type="button" onclick="switchTab('dashboard')" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">
-                            キャンセル
-                        </button>
-                        <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow transition flex items-center gap-2">
-                            <i class="fa-solid fa-robot"></i> AI自動解析 & 議事録生成
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ================= TAB 3: STAFF & COMMITTEE MANAGEMENT ================= -->
-        <div id="view-staff-mgmt" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Staff Master List -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 md:col-span-1 space-y-4">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <h3 class="font-bold text-slate-800 text-sm">所属スタッフ一覧</h3>
-                        <button onclick="toggleStaffModal(true)" class="bg-teal-600 text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-teal-700 transition">
-                            <i class="fa-solid fa-plus"></i> 追加
-                        </button>
-                    </div>
-                    <div id="staff-master-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-                        <!-- Dynamic staff cards -->
-                    </div>
-                </div>
-
-                <!-- Committee Staff Assignment Matrix -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 md:col-span-2 space-y-4">
-                    <div class="border-b pb-3 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-sm">委員会別 アサインメンバー設定</h3>
-                            <p class="text-xs text-slate-500">各委員会での出席資格・議事録権限を持つ専任スタッフを設定します。</p>
-                        </div>
-                    </div>
-
-                    <div id="committee-assignment-matrix" class="space-y-4">
-                        <!-- Dynamic Assignment Cards per Committee -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= TAB 4: MINUTES HISTORY & AUDIT PDF PREVIEW ================= -->
-        <div id="view-minutes-history" class="hidden space-y-6">
-            <!-- Filter Bar -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
-                <div class="flex items-center space-x-2">
-                    <label class="text-xs font-bold text-slate-600">委員会絞り込み:</label>
-                    <select id="filter-committee-select" onchange="renderMinutesHistory()" class="border border-slate-300 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-teal-500">
-                        <option value="ALL">全ての委員会</option>
-                        <!-- Dynamic options -->
-                    </select>
-                </div>
-                <div class="text-xs text-slate-500">
-                    実地指導時は対象の議事録を選択し、「印刷 / PDF出力」ボタンを押してください。
-                </div>
-            </div>
-
-            <!-- Split View: History List and PDF Preview -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- History Side Bar -->
-                <div class="lg:col-span-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3 no-print">
-                    <h3 class="text-xs font-bold text-slate-700 border-b pb-2 flex items-center justify-between">
-                        <span><i class="fa-solid fa-clock-rotate-left"></i> 作成済み議事録</span>
-                        <span id="minutes-count-badge" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">0件</span>
-                    </h3>
-                    <div id="minutes-history-list" class="space-y-2 max-h-[600px] overflow-y-auto">
-                        <!-- Dynamic history cards -->
-                    </div>
-                </div>
-
-                <!-- PDF Preview Panel (Formal Inspection Layout) -->
-                <div class="lg:col-span-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-card" id="pdf-preview-panel">
-                    <div id="pdf-content-area" class="space-y-6">
-                        <div class="text-center py-12 text-slate-400 no-print">
-                            <i class="fa-solid fa-file-pdf text-4xl mb-2"></i>
-                            <p class="text-sm">左側のリストから閲覧する議事録を選択してください。</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Add Staff Modal -->
-    <div id="staff-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 no-print">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-slate-800 text-base border-b pb-2">新規スタッフ登録</h3>
-            <form onsubmit="handleAddStaffSubmit(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">氏名 <span class="text-red-500">*</span></label>
-                    <input type="text" id="new-staff-name" placeholder="例: 訪問 太郎" class="w-full border border-slate-300 rounded-lg p-2 text-xs" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">職種 <span class="text-red-500">*</span></label>
-                    <select id="new-staff-role" class="w-full border border-slate-300 rounded-lg p-2 text-xs" required>
-                        <option value="看護師">看護師</option>
-                        <option value="主任看護師">主任看護師</option>
-                        <option value="理学療法士">理学療法士</option>
-                        <option value="作業療法士">作業療法士</option>
-                        <option value="言語聴覚士">言語聴覚士</option>
-                        <option value="医療事務">医療事務</option>
-                        <option value="管理者">管理者</option>
-                    </select>
-                </div>
-                <div class="flex justify-end space-x-2 pt-3">
-                    <button type="button" onclick="toggleStaffModal(false)" class="px-3 py-1.5 border rounded-lg text-xs text-slate-600">キャンセル</button>
-                    <button type="submit" class="px-4 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700">登録</button>
-                </div>
-            </form>
-        </div>
+      </div>
+      <nav class="flex space-x-1 sm:space-x-2 bg-teal-800/60 p-1.5 rounded-lg text-sm">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5 bg-white text-teal-800 shadow-sm">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> ダッシュボード
+        </button>
+        <button onclick="switchTab('staffs')" id="nav-staffs" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5 text-teal-100 hover:text-white hover:bg-teal-700/50">
+          <i data-lucide="users" class="w-4 h-4"></i> 委員会スタッフ設定
+        </button>
+        <button onclick="switchTab('meeting-create')" id="nav-meeting-create" class="nav-btn px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5 text-teal-100 hover:text-white hover:bg-teal-700/50">
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i> 会議・議事録作成
+        </button>
+      </nav>
     </div>
+  </header>
 
-    <!-- AI Generation Processing Modal Overlay -->
-    <div id="ai-loading-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex flex-col items-center justify-center z-50 no-print">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full space-y-4 text-center">
-            <div class="w-16 h-16 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
-            <div>
-                <h4 class="font-bold text-slate-800 text-base">Gemini AI 解析中...</h4>
-                <p class="text-xs text-slate-500 mt-1">会議要約、研修受講時間、コンプライアンス評価を統合整理しています。</p>
-            </div>
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: DASHBOARD                           -->
+    <!-- ========================================== -->
+    <section id="tab-dashboard" class="tab-content space-y-6">
+      
+      <!-- Top Alert / Station Info Banner -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded mb-1">事業所情報</span>
+          <h2 class="text-2xl font-bold text-slate-800">訪問看護ステーションなごみ</h2>
+          <p class="text-sm text-slate-500 mt-1">2026年度（令和8年度）法定委員会・研修実施状況ログ</p>
         </div>
-    </div>
+        <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm">
+          <i data-lucide="shield-check" class="w-6 h-6 text-teal-600"></i>
+          <div>
+            <div class="font-semibold text-slate-700">実地指導（運営指導）適合チェック</div>
+            <div class="text-xs text-slate-500">法令要件に基づく開催頻度・研修記録を自動追跡中</div>
+          </div>
+        </div>
+      </div>
 
-    <script>
-        /* ================= MASTER DATA CONSTANTS ================= */
-        const MANDATED_COMMITTEES = [
-            {
-                id: 'infection',
-                name: '感染症の予防及びまん延の防止委員会',
-                required_freq: 2,
-                season: '4月・10月',
-                icon: 'fa-virus-slash',
-                color: 'teal',
-                default_topic: '新年度に向けた標準予防策（PPE着脱等）および感染症初動対応シミュレーション'
-            },
-            {
-                id: 'abuse',
-                name: '虐待防止委員会',
-                required_freq: 1,
-                season: '6月',
-                icon: 'fa-hand-paper',
-                color: 'rose',
-                default_topic: '訪問現場における高齢者・障害者虐待早期発見セルフチェックと心理的安全性'
-            },
-            {
-                id: 'bcp',
-                name: '業務継続計画（BCP）委員会',
-                required_freq: 1,
-                season: '9月（防災月間）',
-                icon: 'fa-shield-halved',
-                color: 'amber',
-                default_topic: '大規模災害発生時の利用者安否確認（ランク別優先度評価）および代替通信訓練'
-            },
-            {
-                id: 'harassment',
-                name: 'ハラスメント防止委員会',
-                required_freq: 1,
-                season: '12月',
-                icon: 'fa-comments-dollar',
-                color: 'indigo',
-                default_topic: 'カスタマーハラスメント（利用者・家族からの暴言）の具体的な対応手順と組織的防衛'
-            },
-            {
-                id: 'safety',
-                name: '医療安全委員会',
-                required_freq: 2,
-                season: '7月・1月',
-                icon: 'fa-notes-medical',
-                color: 'emerald',
-                default_topic: '上半期インシデント・アクシデント要因追究（Why-Why分析）と内服誤認防止策'
-            }
-        ];
+      <!-- Committee Progress Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="dashboard-cards">
+        <!-- Cards dynamically populated by JavaScript -->
+      </div>
 
-        /* Initial Default Staff Data */
-        const INITIAL_STAFF = [
-            { id: 's1', name: '山田 護', role: '管理者 / 看護師' },
-            { id: 's2', name: '佐藤 花子', role: '主任看護師' },
-            { id: 's3', name: '鈴木 一郎', role: '看護師' },
-            { id: 's4', name: '高橋 健太', role: '理学療法士' },
-            { id: 's5', name: '田中 美咲', role: '作業療法士' },
-            { id: 's6', name: '伊藤 順子', role: '医療事務' }
-        ];
+      <!-- Recent Minutes List -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 class="font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="file-text" class="w-5 h-5 text-teal-600"></i> 実施済み会議・議事録履歴
+          </h3>
+          <span class="text-xs text-slate-500">最新順</span>
+        </div>
+        <div class="divide-y divide-slate-100" id="recent-minutes-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
 
-        /* Initial Default Committee Assignments (Committee Staffs) */
-        const INITIAL_ASSIGNMENTS = {
-            'infection': ['s1', 's2', 's3'],
-            'abuse': ['s1', 's4', 's6'],
-            'bcp': ['s1', 's2', 's4', 's5'],
-            'harassment': ['s1', 's3', 's6'],
-            'safety': ['s1', 's2', 's3', 's5']
-        };
 
-        /* Initial Pre-populated Minutes Sample */
-        const INITIAL_MINUTES = [
-            {
-                id: 'm-sample-1',
-                committee_id: 'infection',
-                committee_name: '感染症の予防及びまん延の防止委員会',
-                title: '標準予防策の再導入と防護具（PPE）着脱トレーニング',
-                held_at: '2026-04-15 17:00',
-                location: 'ステーション カンファレンスルーム',
-                duration_minutes: 45,
-                creator_id: 's2',
-                creator_name: '佐藤 花子',
-                attendee_ids: ['s1', 's2', 's3'],
-                attendee_names: ['山田 護', '佐藤 花子', '鈴木 一郎'],
-                training_summary: '新年度の訪問看護体制における標準予防策の原則を振り返り、ガウン・N95マスク・手袋の正解着脱順序の実技演習（30分）を実施した。',
-                discussion_points: [
-                    'サージカルマスクの在庫状況および次回共同購入時期の確認',
-                    'ご利用者様宅での手洗い場借り受けマナーと携帯用アルコールの徹底'
-                ],
-                decisions: [
-                    '全訪問車にPPE特別セット（ガウン5着、フェイスシールド）を標準常備する',
-                    'インフルエンザ流行期に備え、次回10月にノロウイルス・冬季対策を実施'
-                ],
-                compliance_review: '法令要件である年2回開催の第1回目を実施完了。受講記録および実技確認も整備済。',
-                approved_at: '2026-04-15 18:00'
-            }
-        ];
+    <!-- ========================================== -->
+    <!-- TAB 2: STAFF & COMMITTEE ASSIGNMENT        -->
+    <!-- ========================================== -->
+    <section id="tab-staffs" class="tab-content space-y-6 hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+          <i data-lucide="user-check" class="w-5 h-5 text-teal-600"></i> 委員会構成員（メンバー）設定
+        </h2>
+        <p class="text-sm text-slate-600 mb-6">
+          各委員会に所属するスタッフ（委員長・委員・書記）を設定します。<br>
+          <span class="text-amber-700 font-medium">※会議の出席者および議事録作成担当者は、ここで各委員会に登録されたメンバーからのみ選択可能となります。</span>
+        </p>
 
-        /* App State Container */
-        let appState = {
-            staffs: [],
-            assignments: {},
-            minutes: []
-        };
+        <!-- Select Committee to Manage -->
+        <div class="mb-6 max-w-md">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">設定対象の委員会を選択</label>
+          <select id="staff-manage-committee-select" onchange="renderCommitteeStaffManager()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2.5 text-sm focus:ring-teal-500 focus:border-teal-500">
+            <!-- Populated by JS -->
+          </select>
+        </div>
 
-        window.onload = function() {
-            loadLocalStorageData();
-            renderDashboard();
-            populateCommitteeDropdowns();
-            renderStaffManagement();
-            renderMinutesHistory();
-        };
+        <!-- Assigned Staff Table / List -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Assigned Members list -->
+          <div class="lg:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <h3 class="font-bold text-sm text-slate-700 mb-3 flex items-center justify-between">
+              <span>現在の登録メンバー</span>
+              <span id="assigned-count-badge" class="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full font-semibold">0名</span>
+            </h3>
+            <div id="committee-staff-list" class="space-y-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
 
-        function loadLocalStorageData() {
-            const savedStaffs = localStorage.getItem('vn_app_staffs');
-            const savedAssign = localStorage.getItem('vn_app_assignments');
-            const savedMinutes = localStorage.getItem('vn_app_minutes');
+          <!-- Add Member Form -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-sm text-slate-700">メンバー新規割り当て</h3>
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">職員名（職種）</label>
+              <select id="add-staff-select" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">委員会内役割</label>
+              <select id="add-staff-role" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                <option value="委員">委員</option>
+                <option value="委員長">委員長</option>
+                <option value="副委員長">副委員長</option>
+                <option value="書記">書記（議事録担当）</option>
+              </select>
+            </div>
+            <button onclick="addStaffToCommittee()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> メンバー追加
+            </button>
+          </div>
 
-            appState.staffs = savedStaffs ? JSON.parse(savedStaffs) : INITIAL_STAFF;
-            appState.assignments = savedAssign ? JSON.parse(savedAssign) : INITIAL_ASSIGNMENTS;
-            appState.minutes = savedMinutes ? JSON.parse(savedMinutes) : INITIAL_MINUTES;
+        </div>
+      </div>
+    </section>
 
-            saveStateToStorage();
-        }
 
-        function saveStateToStorage() {
-            localStorage.setItem('vn_app_staffs', JSON.stringify(appState.staffs));
-            localStorage.setItem('vn_app_assignments', JSON.stringify(appState.assignments));
-            localStorage.setItem('vn_app_minutes', JSON.stringify(appState.minutes));
-        }
+    <!-- ========================================== -->
+    <!-- TAB 3: MEETING & AI MINUTES CREATION       -->
+    <!-- ========================================== -->
+    <section id="tab-meeting-create" class="tab-content space-y-6 hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-teal-600"></i> 会議・研修記録 & AI自動議事録作成
+        </h2>
+        <p class="text-sm text-slate-500 mb-6">委員会開催情報・研修内容を入力し、音声メモ等からAIが実地指導に対応した議事録を整形・作成します。</p>
 
-        function switchTab(tabId) {
-            document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('border-b-2', 'border-amber-400', 'text-amber-300', 'bg-teal-900/50');
-                btn.classList.add('text-teal-100');
-            });
+        <form id="meeting-form" onsubmit="handleGenerateMinutes(event)" class="space-y-6">
+          
+          <!-- Basic Info Block -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">対象委員会 <span class="text-rose-500">*</span></label>
+              <select id="meeting-committee-select" onchange="onMeetingCommitteeChange()" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-teal-500">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">開催日時 <span class="text-rose-500">*</span></label>
+              <input type="datetime-local" id="meeting-date" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">開催場所 / 実施方法</label>
+              <input type="text" id="meeting-location" value="訪問看護ステーションなごみ 会議室" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">研修実施時間（分）<span class="text-rose-500">*</span></label>
+              <input type="number" id="training-duration" min="15" step="5" value="30" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
+            </div>
+          </div>
 
-            document.getElementById(`view-${tabId}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tab-${tabId}`);
-            if (activeBtn) {
-                activeBtn.classList.add('border-b-2', 'border-amber-400', 'text-amber-300', 'bg-teal-900/50');
-                activeBtn.classList.remove('text-teal-100');
-            }
-
-            if (tabId === 'dashboard') renderDashboard();
-            if (tabId === 'staff-mgmt') renderStaffManagement();
-            if (tabId === 'minutes-history') renderMinutesHistory();
-        }
-
-        function renderDashboard() {
-            // Compute total required vs completed
-            let totalRequired = MANDATED_COMMITTEES.reduce((sum, c) => sum + c.required_freq, 0);
-            let completedCount = appState.minutes.length;
-            let progressPercent = Math.min(100, Math.round((completedCount / totalRequired) * 100));
-
-            document.getElementById('stat-total-progress').textContent = `${progressPercent}%`;
-            document.getElementById('stat-staff-count').textContent = `${appState.staffs.length}名`;
-
-            // Render Committee Cards
-            const container = document.getElementById('committee-cards-container');
-            container.innerHTML = '';
-
-            MANDATED_COMMITTEES.forEach(comm => {
-                const commMinutes = appState.minutes.filter(m => m.committee_id === comm.id);
-                const count = commMinutes.length;
-                const isComplete = count >= comm.required_freq;
-
-                let badgeHTML = isComplete 
-                    ? `<span class="bg-teal-100 text-teal-800 text-[10px] font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-check border-teal-600"></i> 完了 (${count}/${comm.required_freq}回)</span>`
-                    : `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-clock"></i> 未完了 (${count}/${comm.required_freq}回)</span>`;
-
-                const assignedStaffCount = (appState.assignments[comm.id] || []).length;
-
-                const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3 relative overflow-hidden';
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-9 h-9 rounded-lg bg-${comm.color}-50 text-${comm.color}-600 flex items-center justify-center font-bold">
-                                <i class="fa-solid ${comm.icon}"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-xs text-slate-800">${comm.name}</h4>
-                                <p class="text-[10px] text-slate-400">法定回数: 年${comm.required_freq}回 / 推奨: ${comm.season}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-100">
-                        <span class="text-slate-500 text-[11px]"><i class="fa-solid fa-users text-slate-400"></i> 構成員: ${assignedStaffCount}名</span>
-                        ${badgeHTML}
-                    </div>
-                    <button onclick="quickStartMeeting('${comm.id}')" class="w-full mt-2 bg-slate-50 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 text-xs py-1.5 rounded-lg font-medium transition flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-plus text-[10px]"></i> 会議・議事録の新規作成
-                    </button>
-                `;
-                container.appendChild(card);
-            });
-
-            // Render Recommendations
-            const topicsContainer = document.getElementById('recommended-topics-container');
-            topicsContainer.innerHTML = '';
+          <!-- Multiple Theme Selection Block (IMPROVED) -->
+          <div class="bg-teal-50/60 p-4 rounded-xl border border-teal-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-teal-900">法定定番研修・議題テーマ（選択肢リスト）</label>
+              <span class="text-xs text-teal-700">※委員会の選択に合わせて選択肢が変化します</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select id="theme-options-select" class="flex-1 bg-white border border-teal-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-teal-500">
+                <!-- Populated dynamically based on selected committee -->
+              </select>
+              <button type="button" onclick="applySelectedThemeOption()" class="bg-teal-700 hover:bg-teal-800 text-white font-medium text-xs px-4 py-2.5 rounded-lg transition whitespace-nowrap flex items-center justify-center gap-1">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> このテーマを適用
+              </button>
+            </div>
             
-            MANDATED_COMMITTEES.slice(0, 4).forEach(comm => {
-                const div = document.createElement('div');
-                div.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs flex justify-between items-center';
-                div.innerHTML = `
-                    <div>
-                        <span class="font-bold text-slate-700 block">${comm.name}</span>
-                        <p class="text-slate-500 text-[11px] mt-0.5">${comm.default_topic}</p>
-                    </div>
-                    <button onclick="quickStartMeeting('${comm.id}')" class="text-xs text-teal-600 font-bold whitespace-nowrap hover:underline">
-                        採用 <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                    </button>
-                `;
-                topicsContainer.appendChild(div);
-            });
-        }
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">決定・入力された研修・議題テーマ <span class="text-rose-500">*</span></label>
+              <input type="text" id="meeting-theme" required placeholder="選択肢から適用するか、直接入力してください" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm font-medium text-slate-800">
+            </div>
+          </div>
 
-        function populateCommitteeDropdowns() {
-            const select = document.getElementById('meeting-committee-select');
-            const filterSelect = document.getElementById('filter-committee-select');
-            select.innerHTML = '';
-            filterSelect.innerHTML = '<option value="ALL">全ての委員会</option>';
-
-            MANDATED_COMMITTEES.forEach(comm => {
-                const opt1 = document.createElement('option');
-                opt1.value = comm.id;
-                opt1.textContent = comm.name;
-                select.appendChild(opt1);
-
-                const opt2 = document.createElement('option');
-                opt2.value = comm.id;
-                opt2.textContent = comm.name;
-                filterSelect.appendChild(opt2);
-            });
-
-            // Set current datetime default
-            const now = new Date();
-            now.setMinutes(0);
-            document.getElementById('meeting-date').value = now.toISOString().slice(0, 16);
-
-            onCommitteeSelectChange();
-        }
-
-        function onCommitteeSelectChange() {
-            const commId = document.getElementById('meeting-committee-select').value;
-            const comm = MANDATED_COMMITTEES.find(c => c.id === commId);
-
-            if (comm) {
-                document.getElementById('meeting-title').value = comm.default_topic;
-            }
-
-            // FILTER STAFFS: Only assigned committee staff
-            const assignedStaffIds = appState.assignments[commId] || [];
-            const committeeStaffs = appState.staffs.filter(s => assignedStaffIds.includes(s.id));
-
-            document.getElementById('committee-staff-count-badge').textContent = `配属: ${committeeStaffs.length}名`;
-
-            // Render Attendee Checkboxes
-            const attendeesBox = document.getElementById('attendees-checkbox-list');
-            attendeesBox.innerHTML = '';
-
-            const creatorSelect = document.getElementById('meeting-creator-select');
-            creatorSelect.innerHTML = '';
-
-            if (committeeStaffs.length === 0) {
-                attendeesBox.innerHTML = '<p class="text-slate-400 text-[11px]">当委員会にスタッフがアサインされていません。「スタッフ割り当て」画面で設定してください。</p>';
-                creatorSelect.innerHTML = '<option value="">なし</option>';
-                return;
-            }
-
-            committeeStaffs.forEach(staff => {
-                // Checkbox
-                const label = document.createElement('label');
-                label.className = 'flex items-center space-x-2 cursor-pointer hover:bg-slate-50 p-1 rounded';
-                label.innerHTML = `
-                    <input type="checkbox" value="${staff.id}" data-name="${staff.name}" class="attendee-cb rounded text-teal-600 focus:ring-teal-500" checked>
-                    <span class="text-slate-700">${staff.name} <span class="text-slate-400 text-[10px]">(${staff.role})</span></span>
-                `;
-                attendeesBox.appendChild(label);
-
-                // Creator Select
-                const opt = document.createElement('option');
-                opt.value = staff.id;
-                opt.textContent = `${staff.name} (${staff.role})`;
-                creatorSelect.appendChild(opt);
-            });
-        }
-
-        function applyPresetTopic() {
-            const commId = document.getElementById('meeting-committee-select').value;
-            const comm = MANDATED_COMMITTEES.find(c => c.id === commId);
-            if (comm) {
-                document.getElementById('meeting-title').value = comm.default_topic;
-            }
-        }
-
-        function quickStartMeeting(commId) {
-            switchTab('meeting-new');
-            document.getElementById('meeting-committee-select').value = commId;
-            onCommitteeSelectChange();
-        }
-
-        function insertSampleTranscript() {
-            const commId = document.getElementById('meeting-committee-select').value;
-            const comm = MANDATED_COMMITTEES.find(c => c.id === commId);
-
-            document.getElementById('meeting-raw-input').value = 
-`【${comm ? comm.name : '委員会'} 開催メモ】
-・研修テーマ：${document.getElementById('meeting-title').value}
-・所要時間：30分（受講研修時間として計上）
-・主な内容：実地指導基準に準拠した業務プロセスの再確認を行った。全スタッフが手順書を確認。
-・問題点・協議内容：ご利用者様への連絡プロトコルと訪問時の感染防具保管場所について質問が相次いだ。
-・決定事項：次回定期訪問までに各担当車内の資機材チェックリストを完了させることとした。欠席者へは要約レジュメにて追講を実施する。`;
-        }
-
-        function handleGenerateMinutes(event) {
-            event.preventDefault();
-
-            const commId = document.getElementById('meeting-committee-select').value;
-            const comm = MANDATED_COMMITTEES.find(c => c.id === commId);
-            const title = document.getElementById('meeting-title').value;
-            const dateVal = document.getElementById('meeting-date').value;
-            const location = document.getElementById('meeting-location').value;
-            const creatorId = document.getElementById('meeting-creator-select').value;
-            const creatorStaff = appState.staffs.find(s => s.id === creatorId);
-            const rawText = document.getElementById('meeting-raw-input').value;
-
-            // Attendees list
-            const attendeeCbs = document.querySelectorAll('.attendee-cb:checked');
-            if (attendeeCbs.length === 0) {
-                alert('出席者を1名以上選択してください。');
-                return;
-            }
-            const attendeeIds = Array.from(attendeeCbs).map(cb => cb.value);
-            const attendeeNames = Array.from(attendeeCbs).map(cb => cb.getAttribute('data-name'));
-
-            // Show AI Loading Modal
-            document.getElementById('ai-loading-modal').classList.remove('hidden');
-
-            setTimeout(() => {
-                // Simulated Gemini LLM structuring
-                const newMinute = {
-                    id: 'm-' + Date.now(),
-                    committee_id: commId,
-                    committee_name: comm ? comm.name : '委員会',
-                    title: title,
-                    held_at: dateVal.replace('T', ' '),
-                    location: location,
-                    duration_minutes: 30, // Default structured duration
-                    creator_id: creatorId,
-                    creator_name: creatorStaff ? creatorStaff.name : '未定',
-                    attendee_ids: attendeeIds,
-                    attendee_names: attendeeNames,
-                    training_summary: `【研修実施要領】${title}に関する講義および実技演習を実施した。（受講実績時間: 30分）`,
-                    discussion_points: [
-                        '訪問看護提供時におけるリスクアセスメントの徹底',
-                        '事業所内共有エスカレーションルートの再確認'
-                    ],
-                    decisions: [
-                        '次回会議までにチェックシートの運用チェックを行う',
-                        '欠席スタッフに対して本議事録の周知および個別追講を実施する'
-                    ],
-                    compliance_review: '本委員会の開催により、厚生労働省の指定訪問看護事業者基準を満たしています。',
-                    approved_at: new Date().toISOString().replace('T', ' ').slice(0, 16)
-                };
-
-                appState.minutes.unshift(newMinute);
-                saveStateToStorage();
-
-                document.getElementById('ai-loading-modal').classList.add('hidden');
-                
-                // Trigger confetti celebration
-                if (typeof confetti === 'function') {
-                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-                }
-
-                // Navigate to PDF preview
-                switchTab('minutes-history');
-                renderMinutesHistory();
-                viewPdfPreview(newMinute.id);
-            }, 1200);
-        }
-
-        function renderStaffManagement() {
-            // Render Staff List
-            const list = document.getElementById('staff-master-list');
-            list.innerHTML = '';
-
-            appState.staffs.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex justify-between items-center text-xs';
-                div.innerHTML = `
-                    <div>
-                        <span class="font-bold text-slate-700 block">${s.name}</span>
-                        <span class="text-slate-400 text-[10px]">${s.role}</span>
-                    </div>
-                    <button onclick="removeStaff('${s.id}')" class="text-slate-400 hover:text-red-500 text-xs">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                `;
-                list.appendChild(div);
-            });
-
-            // Render Committee Assignment Matrix
-            const matrix = document.getElementById('committee-assignment-matrix');
-            matrix.innerHTML = '';
-
-            MANDATED_COMMITTEES.forEach(comm => {
-                const assignedIds = appState.assignments[comm.id] || [];
-
-                const card = document.createElement('div');
-                card.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-2';
-                
-                let checkboxesHTML = appState.staffs.map(staff => {
-                    const isChecked = assignedIds.includes(staff.id) ? 'checked' : '';
-                    return `
-                        <label class="inline-flex items-center space-x-1 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer text-[11px]">
-                            <input type="checkbox" onchange="toggleStaffAssignment('${comm.id}', '${staff.id}')" ${isChecked} class="rounded text-teal-600">
-                            <span>${staff.name}</span>
-                        </label>
-                    `;
-                }).join(' ');
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold text-slate-800">${comm.name}</span>
-                        <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded font-bold">${assignedIds.length}名アサイン</span>
-                    </div>
-                    <div class="flex flex-wrap gap-1.5 pt-1">
-                        ${checkboxesHTML}
-                    </div>
-                `;
-                matrix.appendChild(card);
-            });
-        }
-
-        function toggleStaffAssignment(commId, staffId) {
-            if (!appState.assignments[commId]) appState.assignments[commId] = [];
-            const idx = appState.assignments[commId].indexOf(staffId);
+          <!-- Committee Staff Validation Section (Attendances & Reporter) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            if (idx > -1) {
-                appState.assignments[commId].splice(idx, 1);
-            } else {
-                appState.assignments[commId].push(staffId);
+            <!-- Attendance Checklist -->
+            <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div class="flex justify-between items-center mb-2">
+                <label class="block text-xs font-bold text-slate-700">出席者（当委員会スタッフのみ選択可）<span class="text-rose-500">*</span></label>
+                <span class="text-xs text-slate-500">※欠席者はチェックを外してください</span>
+              </div>
+              <div id="attendees-checkbox-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white p-3 rounded-lg border border-slate-200 max-h-48 overflow-y-auto">
+                <!-- Populated by JS based on committee membership -->
+              </div>
+            </div>
+
+            <!-- Minutes Creator Select -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">議事録作成担当者 <span class="text-rose-500">*</span></label>
+                <p class="text-[11px] text-slate-500 mb-2">当委員会所属メンバーから指定</p>
+                <select id="meeting-reporter-select" required class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm">
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Transcript / Raw Notes Input -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">会議・研修の録音テキストまたは要点メモ</label>
+            <textarea id="meeting-raw-text" rows="5" class="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm" placeholder="例: 防災月間に伴いBCPの確認を実施。大規模地震発生時、まず職員の安全確認後、人工呼吸器等のある優先度A利用者から安否確認。171伝言ダイヤルとLINE WORKSグループを代替連絡手段と決定。次回までに受任者リストを更新予定。"></textarea>
+          </div>
+
+          <!-- Submit / Generate Button -->
+          <button type="submit" id="generate-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+            <i data-lucide="cpu" class="w-5 h-5"></i> AI議事録自動作成・プレビュー生成
+          </button>
+        </form>
+      </div>
+
+      <!-- Generated Minutes Result & Print View -->
+      <div id="minutes-output-card" class="bg-white rounded-xl p-8 shadow-md border border-slate-200 hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4 no-print">
+          <div class="flex items-center gap-2 text-teal-700">
+            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+            <h3 class="font-bold text-lg">議事録プレビュー（実地指導対応標準様式）</h3>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="printer" class="w-4 h-4"></i> 印刷 / PDF保存
+            </button>
+            <button onclick="saveCurrentMinutes()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="save" class="w-4 h-4"></i> システムへ保存・確定
+            </button>
+          </div>
+        </div>
+
+        <!-- Printable Document Area -->
+        <div id="printable-area" class="space-y-6 p-2 text-slate-800">
+          
+          <div class="text-center border-b-2 border-slate-800 pb-3">
+            <h2 class="text-2xl font-bold tracking-wider" id="out-doc-title">委員会議事録兼研修実施記録</h2>
+            <p class="text-xs text-slate-600 mt-1" id="out-station-name">訪問看護ステーションなごみ</p>
+          </div>
+
+          <!-- Document Header Table -->
+          <table class="w-full text-sm border-collapse border border-slate-400">
+            <tbody>
+              <tr>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left w-1/4">委員会区分</th>
+                <td class="border border-slate-400 p-2 font-bold" id="out-committee-name">-</td>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left w-1/4">開催日時</th>
+                <td class="border border-slate-400 p-2" id="out-datetime">-</td>
+              </tr>
+              <tr>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left">開催場所</th>
+                <td class="border border-slate-400 p-2" id="out-location">-</td>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left">研修時間</th>
+                <td class="border border-slate-400 p-2" id="out-duration">-</td>
+              </tr>
+              <tr>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left">議事録作成者</th>
+                <td class="border border-slate-400 p-2" id="out-reporter">-</td>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left">承認（委員長）</th>
+                <td class="border border-slate-400 p-2" id="out-approver">承認済 (電子サイン記録)</td>
+              </tr>
+              <tr>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left">出席委員</th>
+                <td colspan="3" class="border border-slate-400 p-2" id="out-attendees">-</td>
+              </tr>
+              <tr>
+                <th class="border border-slate-400 bg-slate-100 p-2 text-left">議題・研修テーマ</th>
+                <td colspan="3" class="border border-slate-400 p-2 font-semibold" id="out-theme">-</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Structured AI Content -->
+          <div class="space-y-4 text-sm">
+            <div class="border border-slate-300 rounded-lg p-4">
+              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
+                <i data-lucide="book-open" class="w-4 h-4 text-teal-700"></i> 1. 実施研修の概要・伝達事項
+              </h4>
+              <p id="out-training-summary" class="text-slate-700 leading-relaxed whitespace-pre-wrap">-</p>
+            </div>
+
+            <div class="border border-slate-300 rounded-lg p-4">
+              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
+                <i data-lucide="messages-square" class="w-4 h-4 text-teal-700"></i> 2. 協議・検討事項
+              </h4>
+              <ul id="out-discussion-points" class="list-disc list-inside text-slate-700 space-y-1">
+                <!-- Li items -->
+              </ul>
+            </div>
+
+            <div class="border border-slate-300 rounded-lg p-4 bg-slate-50/50">
+              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
+                <i data-lucide="check-square" class="w-4 h-4 text-teal-700"></i> 3. 決定事項・今後の運用ルール
+              </h4>
+              <ul id="out-decisions" class="list-disc list-inside text-slate-700 space-y-1 font-medium">
+                <!-- Li items -->
+              </ul>
+            </div>
+
+            <div class="border border-slate-300 rounded-lg p-4">
+              <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2 flex items-center gap-1.5">
+                <i data-lucide="arrow-right-circle" class="w-4 h-4 text-teal-700"></i> 4. 次回アクション・宿題事項
+              </h4>
+              <p id="out-next-action" class="text-slate-700 leading-relaxed">-</p>
+            </div>
+          </div>
+
+          <!-- Compliance Footer Note -->
+          <div class="text-right text-xs text-slate-500 pt-4 border-t border-slate-200">
+            訪問看護ステーションなごみ 運営管理システム自動記録 (改ざん防止IDタイムスタンプ保持)
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- JavaScript Application Engine -->
+  <script>
+    // =========================================================================
+    // MASTER DATA DEFINITION (FOR VISITING NURSE STATION NAGOMI)
+    // =========================================================================
+    const STATION_NAME = "訪問看護ステーションなごみ";
+
+    const COMMITTEES_MASTER = [
+      {
+        id: "infection",
+        name: "感染症の予防及びまん延の防止委員会",
+        required_freq: 2,
+        freq_label: "年2回以上 (約6ヶ月に1回)",
+        themes: [
+          "【1回目・春夏】新体制における標準予防策（一律の感染対策）の再確認と衛生用品点検",
+          "【1回目・春夏】訪問看護における防護具（PPE）着脱演習と感染廃棄物の安全処理",
+          "【2回目・秋冬】冬季感染症（インフル・ノロ・COVID-19等）蔓延防止マニュアルの更新と対応シミュレーション",
+          "【2回目・秋冬】利用者宅における環境整備および訪問スタッフの体調管理・報告ラインの徹底"
+        ]
+      },
+      {
+        id: "abuse",
+        name: "虐待防止委員会",
+        required_freq: 1,
+        freq_label: "年1回以上",
+        themes: [
+          "【通常】障害者・高齢者虐待防止法の理解と、訪問時における早期発見兆候チェック",
+          "【通常】身体拘束ゼロの原則と例外三要件（切迫性・非代替性・一時性）の事例検討",
+          "【通常】不適切なケア・グレーゾーン行為の振り返りと不適切な関わりの防止策",
+          "【通常】訪問看護スタッフのストレス管理と心理的安全性向上による虐待予防"
+        ]
+      },
+      {
+        id: "bcp",
+        name: "業務継続計画（BCP）委員会",
+        required_freq: 1,
+        freq_label: "年1回以上",
+        themes: [
+          "【防災月間・9月推奨】大規模地震発生時における優先訪問対象者（医療依存度ランク）の見直しと安否確認訓練",
+          "【防災月間・9月推奨】台風・集中豪雨時の代替通信手段（災害用伝言ダイヤル171等）の操作検証",
+          "【感染症BCP】スタッフ大量罹患時における訪問体制の縮小運用および代替職員の確保スキーム"
+        ]
+      },
+      {
+        id: "harassment",
+        name: "ハラスメント防止委員会",
+        required_freq: 1,
+        freq_label: "年1回以上",
+        themes: [
+          "【年末年始推奨】利用者および家族からのカスタマーハラスメント（暴言・セクハラ等）対応基準と単独訪問判断",
+          "【年末年始推奨】職場内におけるパワーハラスメント・セクハラ防止と風通しの良い組織づくり",
+          "【通常】ハラスメント発生時の相談窓口の周知と初期対応マニュアルの確認"
+        ]
+      },
+      {
+        id: "safety",
+        name: "医療安全委員会",
+        required_freq: 2,
+        freq_label: "年2回以上",
+        themes: [
+          "【1回目】上半期インシデント・アクシデント事例のWhy-Why分析と内服薬配薬誤認防止策",
+          "【1回目】訪問看護における転倒・転落リスク評価シートの標準化と共有",
+          "【2回目】カテーテル・チューブ類等の医療機器トラブル防止と緊急時連絡フロー",
+          "【2回目】ヒヤリハット報告の定着化と医療事故未然防止のためのリスクアセスメント"
+        ]
+      }
+    ];
+
+    const DEFAULT_STAFFS = [
+      { id: 1, name: "山田 護", role: "看護師 (管理者)" },
+      { id: 2, name: "佐藤 花子", role: "看護師" },
+      { id: 3, name: "田中 健太", role: "作業療法士" },
+      { id: 4, name: "鈴木 美咲", role: "理学療法士" },
+      { id: 5, name: "高橋 誠", role: "事務員" }
+    ];
+
+    // Default Committee Assignments
+    const DEFAULT_COMMITTEE_STAFFS = {
+      infection: [
+        { staff_id: 1, committee_role: "委員長" },
+        { staff_id: 2, committee_role: "書記" },
+        { staff_id: 5, committee_role: "委員" }
+      ],
+      abuse: [
+        { staff_id: 1, committee_role: "委員長" },
+        { staff_id: 3, committee_role: "委員" }
+      ],
+      bcp: [
+        { staff_id: 1, committee_role: "委員長" },
+        { staff_id: 2, committee_role: "委員" },
+        { staff_id: 3, committee_role: "書記" },
+        { staff_id: 4, committee_role: "委員" },
+        { staff_id: 5, committee_role: "委員" }
+      ],
+      harassment: [
+        { staff_id: 1, committee_role: "委員長" },
+        { staff_id: 4, committee_role: "委員" }
+      ],
+      safety: [
+        { staff_id: 2, committee_role: "委員長" },
+        { staff_id: 3, committee_role: "書記" },
+        { staff_id: 4, committee_role: "委員" }
+      ]
+    };
+
+    // Application State
+    let appState = {
+      committeeStaffs: JSON.parse(localStorage.getItem('nagomi_committee_staffs')) || DEFAULT_COMMITTEE_STAFFS,
+      minutesHistory: JSON.parse(localStorage.getItem('nagomi_minutes_history')) || [],
+      currentGeneratedMinutes: null
+    };
+
+    // Initialize Lucide Icons & App
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initUI();
+      renderDashboard();
+      renderCommitteeStaffManager();
+      populateMeetingFormSelects();
+    });
+
+    // Save State to LocalStorage
+    function saveState() {
+      localStorage.setItem('nagomi_committee_staffs', JSON.stringify(appState.committeeStaffs));
+      localStorage.setItem('nagomi_minutes_history', JSON.stringify(appState.minutesHistory));
+    }
+
+    // =========================================================================
+    // TAB SWITCHING NAVIGATION
+    // =========================================================================
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-teal-800', 'shadow-sm');
+        btn.classList.add('text-teal-100');
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.add('bg-white', 'text-teal-800', 'shadow-sm');
+        activeNav.classList.remove('text-teal-100');
+      }
+
+      if (tabId === 'dashboard') renderDashboard();
+      if (tabId === 'staffs') renderCommitteeStaffManager();
+      if (tabId === 'meeting-create') populateMeetingFormSelects();
+    }
+
+    function initUI() {
+      // Set default datetime in meeting form
+      const now = new Date();
+      now.setMinutes(0);
+      const isoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+      document.getElementById('meeting-date').value = isoString;
+    }
+
+    // =========================================================================
+    // RENDER: DASHBOARD
+    // =========================================================================
+    function renderDashboard() {
+      const cardsContainer = document.getElementById('dashboard-cards');
+      cardsContainer.innerHTML = '';
+
+      COMMITTEES_MASTER.forEach(comm => {
+        // Count held meetings this fiscal year
+        const heldCount = appState.minutesHistory.filter(m => m.committee_id === comm.id).length;
+        const isCompleted = heldCount >= comm.required_freq;
+        const progressPercent = Math.min(100, Math.round((heldCount / comm.required_freq) * 100));
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4";
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">${comm.freq_label}</span>
+              <h3 class="font-bold text-slate-800 text-base mt-0.5">${comm.name}</h3>
+            </div>
+            ${isCompleted 
+              ? `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> 完了</span>`
+              : `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">未達成</span>`
             }
-            saveStateToStorage();
-            renderStaffManagement();
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs text-slate-600 mb-1">
+              <span>当年度開催実績</span>
+              <span class="font-bold">${heldCount} / ${comm.required_freq} 回</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-teal-600 h-2 rounded-full transition-all duration-500" style="width: ${progressPercent}%"></div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
+            <span class="text-slate-500">メンバー: ${appState.committeeStaffs[comm.id]?.length || 0}名</span>
+            <button onclick="startMeetingForCommittee('${comm.id}')" class="text-teal-700 font-bold hover:underline flex items-center gap-1">
+              開催・記録入力 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+
+      // Render Recent Minutes List
+      const recentList = document.getElementById('recent-minutes-list');
+      recentList.innerHTML = '';
+
+      if (appState.minutesHistory.length === 0) {
+        recentList.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm">記録された議事録はまだありません。</div>`;
+      } else {
+        appState.minutesHistory.slice().reverse().forEach(min => {
+          const item = document.createElement('div');
+          item.className = "p-4 hover:bg-slate-50 transition flex justify-between items-center";
+          item.innerHTML = `
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-slate-800">${min.committee_name}</span>
+                <span class="text-xs text-slate-500">（${min.date.split('T')[0]} 開催）</span>
+              </div>
+              <div class="text-xs text-slate-600 mt-0.5">議題: ${min.theme}</div>
+            </div>
+            <button onclick="viewHistoryMinutes('${min.id}')" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded-lg text-slate-700 font-medium transition">
+              議事録表示
+            </button>
+          `;
+          recentList.appendChild(item);
+        });
+      }
+
+      lucide.createIcons();
+    }
+
+    function startMeetingForCommittee(commId) {
+      switchTab('meeting-create');
+      document.getElementById('meeting-committee-select').value = commId;
+      onMeetingCommitteeChange();
+    }
+
+    // =========================================================================
+    // RENDER: COMMITTEE STAFF MANAGER
+    // =========================================================================
+    function renderCommitteeStaffManager() {
+      const select = document.getElementById('staff-manage-committee-select');
+      
+      // Populate dropdown if empty
+      if (select.children.length === 0) {
+        COMMITTEES_MASTER.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          select.appendChild(opt);
+        });
+      }
+
+      const selectedCommId = select.value || COMMITTEES_MASTER[0].id;
+      const assigned = appState.committeeStaffs[selectedCommId] || [];
+
+      document.getElementById('assigned-count-badge').textContent = `${assigned.length}名`;
+
+      const listContainer = document.getElementById('committee-staff-list');
+      listContainer.innerHTML = '';
+
+      if (assigned.length === 0) {
+        listContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">メンバーがまだ登録されていません。</div>`;
+      } else {
+        assigned.forEach(item => {
+          const staffObj = DEFAULT_STAFFS.find(s => s.id === item.staff_id);
+          if (!staffObj) return;
+
+          const row = document.createElement('div');
+          row.className = "bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center text-sm";
+          row.innerHTML = `
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-slate-800">${staffObj.name}</span>
+              <span class="text-xs text-slate-500">（${staffObj.role}）</span>
+              <span class="bg-teal-50 text-teal-800 text-xs px-2 py-0.5 rounded font-medium">${item.committee_role}</span>
+            </div>
+            <button onclick="removeStaffFromCommittee('${selectedCommId}', ${item.staff_id})" class="text-slate-400 hover:text-rose-600 transition p-1">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          `;
+          listContainer.appendChild(row);
+        });
+      }
+
+      // Populate Add Member Select
+      const addSelect = document.getElementById('add-staff-select');
+      addSelect.innerHTML = '';
+      DEFAULT_STAFFS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.role})`;
+        addSelect.appendChild(opt);
+      });
+
+      lucide.createIcons();
+    }
+
+    function addStaffToCommittee() {
+      const commId = document.getElementById('staff-manage-committee-select').value;
+      const staffId = parseInt(document.getElementById('add-staff-select').value);
+      const role = document.getElementById('add-staff-role').value;
+
+      if (!appState.committeeStaffs[commId]) appState.committeeStaffs[commId] = [];
+
+      // Check duplicate
+      if (appState.committeeStaffs[commId].some(x => x.staff_id === staffId)) {
+        alert('このスタッフは既に登録されています。');
+        return;
+      }
+
+      appState.committeeStaffs[commId].push({ staff_id: staffId, committee_role: role });
+      saveState();
+      renderCommitteeStaffManager();
+    }
+
+    function removeStaffFromCommittee(commId, staffId) {
+      appState.committeeStaffs[commId] = appState.committeeStaffs[commId].filter(x => x.staff_id !== staffId);
+      saveState();
+      renderCommitteeStaffManager();
+    }
+
+    // =========================================================================
+    // FORM LOGIC: MEETING & AI GENERATION
+    // =========================================================================
+    function populateMeetingFormSelects() {
+      const commSelect = document.getElementById('meeting-committee-select');
+      if (commSelect.children.length === 0) {
+        COMMITTEES_MASTER.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          commSelect.appendChild(opt);
+        });
+      }
+
+      onMeetingCommitteeChange();
+    }
+
+    function onMeetingCommitteeChange() {
+      const commId = document.getElementById('meeting-committee-select').value;
+      const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
+
+      // Populate Theme Dropdown Options (MULTIPLE OPTIONS FEATURE)
+      const themeSelect = document.getElementById('theme-options-select');
+      themeSelect.innerHTML = '';
+      if (commMaster && commMaster.themes) {
+        commMaster.themes.forEach((themeText, idx) => {
+          const opt = document.createElement('option');
+          opt.value = themeText;
+          opt.textContent = themeText;
+          themeSelect.appendChild(opt);
+        });
+      }
+
+      // Automatically apply the first option by default
+      applySelectedThemeOption();
+
+      // Render Attendance Checkboxes and Reporter Options (STRICT VALIDATION BASED ON ASSIGNED MEMBERS)
+      const assignedMembers = appState.committeeStaffs[commId] || [];
+      const attendeesContainer = document.getElementById('attendees-checkbox-list');
+      const reporterSelect = document.getElementById('meeting-reporter-select');
+
+      attendeesContainer.innerHTML = '';
+      reporterSelect.innerHTML = '';
+
+      if (assignedMembers.length === 0) {
+        attendeesContainer.innerHTML = `<div class="col-span-2 text-rose-600 text-xs p-2">※当委員会に配置されたスタッフが登録されていません。「委員会スタッフ設定」画面でメンバーを追加してください。</div>`;
+        reporterSelect.innerHTML = `<option value="">(配置メンバーなし)</option>`;
+        return;
+      }
+
+      assignedMembers.forEach(m => {
+        const staffObj = DEFAULT_STAFFS.find(s => s.id === m.staff_id);
+        if (!staffObj) return;
+
+        // Attendees Checkbox
+        const label = document.createElement('label');
+        label.className = "flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded text-xs cursor-pointer";
+        label.innerHTML = `
+          <input type="checkbox" value="${staffObj.name}" checked class="attendee-cb rounded border-slate-300 text-teal-600 focus:ring-teal-500">
+          <span class="font-medium text-slate-800">${staffObj.name}</span>
+          <span class="text-[10px] text-slate-400">(${staffObj.role})</span>
+        `;
+        attendeesContainer.appendChild(label);
+
+        // Reporter Option
+        const opt = document.createElement('option');
+        opt.value = `${staffObj.name} (${m.committee_role})`;
+        opt.textContent = `${staffObj.name} - ${m.committee_role}`;
+        reporterSelect.appendChild(opt);
+      });
+    }
+
+    function applySelectedThemeOption() {
+      const selectedOption = document.getElementById('theme-options-select').value;
+      if (selectedOption) {
+        document.getElementById('meeting-theme').value = selectedOption;
+      }
+    }
+
+    // AI Minutes Generation Logic
+    function handleGenerateMinutes(event) {
+      event.preventDefault();
+
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> AI議事録文章を解析・自動生成中...`;
+      lucide.createIcons();
+
+      setTimeout(() => {
+        const commId = document.getElementById('meeting-committee-select').value;
+        const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
+        const datetimeVal = document.getElementById('meeting-date').value;
+        const locationVal = document.getElementById('meeting-location').value;
+        const durationVal = document.getElementById('training-duration').value;
+        const themeVal = document.getElementById('meeting-theme').value;
+        const reporterVal = document.getElementById('meeting-reporter-select').value;
+        const rawText = document.getElementById('meeting-raw-text').value;
+
+        // Gather checked attendees
+        const checkedBoxes = document.querySelectorAll('.attendee-cb:checked');
+        const attendeeNames = Array.from(checkedBoxes).map(cb => cb.value);
+
+        if (attendeeNames.length === 0) {
+          alert('出席者を1名以上選択してください。');
+          btn.disabled = false;
+          btn.innerHTML = `<i data-lucide="cpu" class="w-5 h-5"></i> AI議事録自動作成・プレビュー生成`;
+          lucide.createIcons();
+          return;
         }
 
-        function toggleStaffModal(show) {
-            document.getElementById('staff-modal').classList.toggle('hidden', !show);
+        // AI Simulated Processing based on Theme & Raw Text
+        const minutesData = {
+          id: 'MIN-' + Date.now(),
+          committee_id: commId,
+          committee_name: commMaster.name,
+          date: datetimeVal,
+          location: locationVal,
+          duration: `${durationVal}分`,
+          reporter: reporterVal,
+          attendees: attendeeNames.join('、 '),
+          theme: themeVal,
+          summary: `本日は【${themeVal}】をテーマとして当委員会の研修および定期協議を実施した。法令で定められた標準予防および各種手順を再確認し、スタッフ間での実践と知識共有を行った。`,
+          discussions: [
+            `最新のマニュアルに基づき、${themeVal}に関する手順と訪問時の具体的な注意事項を確認した。`,
+            `過去のヒヤリハット・インシデント事例および具体的な訪問現場での注意ポイントについて参加者で検証を行った。`,
+            `緊急時連絡体制および他職種・自治体等への報告ラインに漏れがないかを相互照会した。`
+          ],
+          decisions: [
+            `今回共有された対策手順を全訪問スタッフ（非常勤を含む）へ周知徹底する。`,
+            `次回開催予定時期までに、チェックリストおよび関連記録様式の更新を完了させる。`
+          ],
+          next_action: `次回（${commMaster.freq_label}に基づき予定）は、実践確認および今回の決定事項の定着評価を行う。`
+        };
+
+        if (rawText.trim() !== "") {
+          minutesData.summary += `\n（補足メモ反映: ${rawText}）`;
         }
 
-        function handleAddStaffSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('new-staff-name').value;
-            const role = document.getElementById('new-staff-role').value;
+        appState.currentGeneratedMinutes = minutesData;
+        renderMinutesOutput(minutesData);
 
-            const newStaff = { id: 's-' + Date.now(), name, role };
-            appState.staffs.push(newStaff);
-            saveStateToStorage();
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="cpu" class="w-5 h-5"></i> AI議事録自動作成・プレビュー生成`;
+        lucide.createIcons();
 
-            document.getElementById('new-staff-name').value = '';
-            toggleStaffModal(false);
-            renderStaffManagement();
-            renderDashboard();
-        }
+        // Scroll down smoothly
+        document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
+      }, 1200);
+    }
 
-        function removeStaff(staffId) {
-            if (confirm('このスタッフを削除しますか？')) {
-                appState.staffs = appState.staffs.filter(s => s.id !== staffId);
-                saveStateToStorage();
-                renderStaffManagement();
-                renderDashboard();
-            }
-        }
+    function renderMinutesOutput(data) {
+      document.getElementById('out-committee-name').textContent = data.committee_name;
+      document.getElementById('out-datetime').textContent = data.date.replace('T', ' ');
+      document.getElementById('out-location').textContent = data.location;
+      document.getElementById('out-duration').textContent = data.duration;
+      document.getElementById('out-reporter').textContent = data.reporter;
+      document.getElementById('out-attendees').textContent = data.attendees;
+      document.getElementById('out-theme').textContent = data.theme;
+      
+      document.getElementById('out-training-summary').textContent = data.summary;
 
-        function renderMinutesHistory() {
-            const filterComm = document.getElementById('filter-committee-select').value;
-            const container = document.getElementById('minutes-history-list');
-            container.innerHTML = '';
+      const discUl = document.getElementById('out-discussion-points');
+      discUl.innerHTML = '';
+      data.discussions.forEach(d => {
+        const li = document.createElement('li');
+        li.textContent = d;
+        discUl.appendChild(li);
+      });
 
-            let filtered = appState.minutes;
-            if (filterComm !== 'ALL') {
-                filtered = filtered.filter(m => m.committee_id === filterComm);
-            }
+      const decUl = document.getElementById('out-decisions');
+      decUl.innerHTML = '';
+      data.decisions.forEach(d => {
+        const li = document.createElement('li');
+        li.textContent = d;
+        decUl.appendChild(li);
+      });
 
-            document.getElementById('minutes-count-badge').textContent = `${filtered.length}件`;
+      document.getElementById('out-next-action').textContent = data.next_action;
 
-            if (filtered.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 p-3">議事録がありません。</p>';
-                return;
-            }
+      document.getElementById('minutes-output-card').classList.remove('hidden');
+    }
 
-            filtered.forEach(m => {
-                const card = document.createElement('div');
-                card.className = 'p-3 bg-slate-50 hover:bg-teal-50/50 border border-slate-200 rounded-lg cursor-pointer transition text-xs space-y-1';
-                card.onclick = () => viewPdfPreview(m.id);
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <span class="font-bold text-slate-800 line-clamp-1">${m.title}</span>
-                    </div>
-                    <p class="text-[10px] text-teal-700 font-medium">${m.committee_name}</p>
-                    <div class="flex justify-between text-[10px] text-slate-400 border-t border-slate-100 pt-1">
-                        <span><i class="fa-regular fa-calendar"></i> ${m.held_at.slice(0,10)}</span>
-                        <span>作成者: ${m.creator_name}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
+    function saveCurrentMinutes() {
+      if (!appState.currentGeneratedMinutes) return;
+      
+      appState.minutesHistory.push(appState.currentGeneratedMinutes);
+      saveState();
+      alert('議事録をシステムに正常保存・確定しました！');
+      switchTab('dashboard');
+    }
 
-            // Automatically preview first item if preview is empty
-            if (filtered.length > 0) {
-                viewPdfPreview(filtered[0].id);
-            }
-        }
+    function viewHistoryMinutes(id) {
+      const data = appState.minutesHistory.find(m => m.id === id);
+      if (!data) return;
 
-        function viewPdfPreview(minuteId) {
-            const m = appState.minutes.find(item => item.id === minuteId);
-            const panel = document.getElementById('pdf-content-area');
-
-            if (!m) return;
-
-            panel.innerHTML = `
-                <!-- Formal Document Header -->
-                <div class="border-b-2 border-slate-800 pb-4 flex justify-between items-end">
-                    <div>
-                        <span class="text-xs font-bold tracking-widest text-slate-500 uppercase">運営指導・実地指導提出用 様式</span>
-                        <h2 class="text-xl font-bold text-slate-900 mt-1">${m.committee_name} 議事録</h2>
-                    </div>
-                    <div class="text-right no-print">
-                        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow flex items-center gap-1">
-                            <i class="fa-solid fa-print"></i> 印刷 / PDF保存
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Meta Specs Table -->
-                <table class="w-full text-xs border-collapse border border-slate-300">
-                    <tbody>
-                        <tr class="bg-slate-50">
-                            <th class="border border-slate-300 p-2 text-left w-28 font-bold text-slate-700">開催日時</th>
-                            <td class="border border-slate-300 p-2 text-slate-800">${m.held_at} （研修時間: ${m.duration_minutes}分）</td>
-                            <th class="border border-slate-300 p-2 text-left w-28 font-bold text-slate-700">開催場所</th>
-                            <td class="border border-slate-300 p-2 text-slate-800">${m.location}</td>
-                        </tr>
-                        <tr>
-                            <th class="border border-slate-300 p-2 text-left font-bold text-slate-700">出席メンバー</th>
-                            <td class="border border-slate-300 p-2 text-slate-800" colspan="3">${m.attendee_names.join('、 ')}</td>
-                        </tr>
-                        <tr class="bg-slate-50">
-                            <th class="border border-slate-300 p-2 text-left font-bold text-slate-700">議事録作成者</th>
-                            <td class="border border-slate-300 p-2 text-slate-800">${m.creator_name}</td>
-                            <th class="border border-slate-300 p-2 text-left font-bold text-slate-700">承認タイムスタンプ</th>
-                            <td class="border border-slate-300 p-2 text-slate-800">${m.approved_at} (承認済)</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Main Section 1: Agenda Title -->
-                <div class="space-y-1">
-                    <h4 class="text-xs font-bold text-slate-800 bg-slate-100 p-2 rounded border-l-4 border-teal-600">一、 会議・研修題目</h4>
-                    <p class="text-xs text-slate-800 pl-2 font-medium">${m.title}</p>
-                </div>
-
-                <!-- Main Section 2: Training Summary -->
-                <div class="space-y-1">
-                    <h4 class="text-xs font-bold text-slate-800 bg-slate-100 p-2 rounded border-l-4 border-teal-600">二、 研修概要・実施要領</h4>
-                    <p class="text-xs text-slate-700 leading-relaxed pl-2">${m.training_summary}</p>
-                </div>
-
-                <!-- Main Section 3: Discussion Points -->
-                <div class="space-y-1">
-                    <h4 class="text-xs font-bold text-slate-800 bg-slate-100 p-2 rounded border-l-4 border-teal-600">三、 協議・検討事項</h4>
-                    <ul class="list-disc list-inside text-xs text-slate-700 pl-2 space-y-1">
-                        ${m.discussion_points.map(pt => `<li>${pt}</li>`).join('')}
-                    </ul>
-                </div>
-
-                <!-- Main Section 4: Decisions -->
-                <div class="space-y-1">
-                    <h4 class="text-xs font-bold text-slate-800 bg-slate-100 p-2 rounded border-l-4 border-teal-600">四、 決定事項および次回アクション</h4>
-                    <ul class="list-disc list-inside text-xs text-slate-700 pl-2 space-y-1">
-                        ${m.decisions.map(d => `<li>${d}</li>`).join('')}
-                    </ul>
-                </div>
-
-                <!-- Compliance Review -->
-                <div class="mt-6 pt-4 border-t border-slate-200 text-[11px] text-slate-500 flex justify-between items-center">
-                    <span>【運営指導確認欄】 上記の通り、指定訪問看護基準に基づき適切な委員会および研修が執り行われたことを証明します。</span>
-                    <span class="font-bold">ひまわり訪問看護ステーション</span>
-                </div>
-            `;
-        }
-    </script>
+      switchTab('meeting-create');
+      appState.currentGeneratedMinutes = data;
+      renderMinutesOutput(data);
+      document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
 </body>
 </html>
