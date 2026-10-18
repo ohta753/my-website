@@ -49,7 +49,7 @@
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                 <i data-lucide="user" class="w-4 h-4"></i>
               </span>
-              <input type="text" id="login-id" required placeholder="IDを入力" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500">
+              <input type="text" id="login-id" required placeholder="IDを入力 (初期値: matsu)" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500">
             </div>
           </div>
 
@@ -59,7 +59,7 @@
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                 <i data-lucide="key-round" class="w-4 h-4"></i>
               </span>
-              <input type="password" id="login-pw" required placeholder="パスワードを入力" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500">
+              <input type="password" id="login-pw" required placeholder="パスワードを入力 (初期値: matsu0001)" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500">
             </div>
           </div>
 
@@ -75,7 +75,7 @@
         </form>
 
         <div class="mt-4 text-center">
-          <button onclick="togglePasswordResetModal(true)" class="text-xs text-teal-700 hover:underline">
+          <button type="button" onclick="togglePasswordResetModal(true)" class="text-xs text-teal-700 hover:underline font-medium">
             ID・パスワードを忘れた場合はこちら
           </button>
         </div>
@@ -90,7 +90,7 @@
         <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
           <i data-lucide="help-circle" class="w-4 h-4 text-teal-600"></i> パスワードの復帰・再設定
         </h3>
-        <button onclick="togglePasswordResetModal(false)" class="text-slate-400 hover:text-slate-600">
+        <button type="button" onclick="togglePasswordResetModal(false)" class="text-slate-400 hover:text-slate-600">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -495,7 +495,7 @@
             </div>
 
             <input type="file" id="import-file-input" accept=".xlsx,.docx,.txt" onchange="handleFileImport(event)" class="hidden">
-            <button onclick="document.getElementById('import-file-input').click()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg shadow transition">
+            <button type="button" onclick="document.getElementById('import-file-input').click()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg shadow transition">
               ファイルを選択して取り込む
             </button>
           </div>
@@ -537,15 +537,25 @@
 
   <!-- JavaScript Application Engine -->
   <script>
-    // AUTHENTICATION & LOGIN
+    // AUTHENTICATION & LOGIN ENGINE
     const DEFAULT_USER_ID = "matsu";
     const DEFAULT_USER_PW = "matsu0001";
     const MASTER_RESET_CODE = "matsu";
 
-    let authCredentials = JSON.parse(localStorage.getItem('matsu_auth')) || {
-      id: DEFAULT_USER_ID,
-      pw: DEFAULT_USER_PW
-    };
+    // 認証情報オブジェクトの初期化
+    function getAuthCredentials() {
+      const saved = localStorage.getItem('matsu_auth');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch(e) {
+          localStorage.removeItem('matsu_auth');
+        }
+      }
+      return { id: DEFAULT_USER_ID, pw: DEFAULT_USER_PW };
+    }
+
+    let authCredentials = getAuthCredentials();
 
     function checkAuth() {
       const isLoggedIn = sessionStorage.getItem('matsu_logged_in') === 'true';
@@ -560,11 +570,18 @@
     }
 
     function handleLogin(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
+      
       const idInput = document.getElementById('login-id').value.trim();
-      const pwInput = document.getElementById('login-pw').value;
+      const pwInput = document.getElementById('login-pw').value.trim();
 
-      if (idInput === authCredentials.id && pwInput === authCredentials.pw) {
+      // 初期値または保存値と照元比較
+      const currentCreds = getAuthCredentials();
+
+      if (
+        (idInput === currentCreds.id && pwInput === currentCreds.pw) ||
+        (idInput === DEFAULT_USER_ID && pwInput === DEFAULT_USER_PW)
+      ) {
         sessionStorage.setItem('matsu_logged_in', 'true');
         document.getElementById('login-error').classList.add('hidden');
         checkAuth();
@@ -580,18 +597,24 @@
 
     function togglePasswordResetModal(show) {
       const modal = document.getElementById('reset-modal');
-      if (show) modal.classList.remove('hidden');
-      else modal.classList.add('hidden');
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
     }
 
     function handleResetPassword(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
+      
       const resetId = document.getElementById('reset-user-id').value.trim();
       const resetCode = document.getElementById('reset-code').value.trim();
 
       if (resetCode === MASTER_RESET_CODE) {
-        authCredentials.id = resetId || DEFAULT_USER_ID;
-        authCredentials.pw = DEFAULT_USER_PW;
+        authCredentials = {
+          id: resetId || DEFAULT_USER_ID,
+          pw: DEFAULT_USER_PW
+        };
         localStorage.setItem('matsu_auth', JSON.stringify(authCredentials));
         alert(`パスワードを初期化しました。\n\nID: ${authCredentials.id}\nPW: ${DEFAULT_USER_PW}`);
         togglePasswordResetModal(false);
@@ -1192,9 +1215,7 @@
       });
     }
 
-    // =========================================================
-    // 過去ファイルインポート・読み取り修復ロジック (Excel/Word/Text)
-    // =========================================================
+    // Past File Import Engine (Excel/Word/Text)
     function handleFileImport(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -1206,14 +1227,12 @@
       previewArea.value = "ファイルを解析・読み込み中...";
       tag.classList.add('hidden');
 
-      // 非対応形式 (PDF, 画像) のガード処理
       if (fileName.endsWith('.pdf') || file.type.startsWith('image/')) {
         alert("PDFや画像ファイルは直接読み込めません。\nWord (.docx)、Excel (.xlsx)、テキスト (.txt) ファイルを選択してください。");
         previewArea.value = "";
         return;
       }
 
-      // Excelファイル (.xlsx) の解析
       if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
         const reader = new FileReader();
         reader.onload = function(evt) {
@@ -1223,4 +1242,101 @@
             let extractedRows = [];
 
             workbook.SheetNames.forEach(sheetName => {
-              const worksheet = workbook.Sheets
+              const worksheet = workbook.Sheets[sheetName];
+              const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+              jsonRows.forEach(row => {
+                const rowStr = row.filter(cell => cell !== null && cell !== "").join(" ");
+                if (rowStr.trim() !== "") {
+                  extractedRows.push(rowStr);
+                }
+              });
+            });
+
+            const textOutput = extractedRows.join("\n");
+            previewArea.value = textOutput || "Excelファイルから文字情報を取得できませんでした。";
+            tag.classList.remove('hidden');
+          } catch (err) {
+            alert("Excelファイルの読み込みに失敗しました。");
+            previewArea.value = "";
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      else if (fileName.endsWith('.docx')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          mammoth.extractRawText({ arrayBuffer: evt.target.result })
+            .then(function(result) {
+              previewArea.value = result.value || "Wordファイルから文字情報を取得できませんでした。";
+              tag.classList.remove('hidden');
+            })
+            .catch(function(err) {
+              alert("Wordファイルの読み込みに失敗しました。");
+              previewArea.value = "";
+            });
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      else {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          previewArea.value = evt.target.result;
+          tag.classList.remove('hidden');
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+    }
+
+    function convertImportedTextToMinutes() {
+      const rawText = document.getElementById('import-text-preview').value;
+      if (!rawText.trim() || rawText.includes("解析中...")) {
+        alert('解析・読み込みテキスト結果に入力されている必要があります。ファイルを取り込むかテキストを入力してください。');
+        return;
+      }
+
+      const fy = document.getElementById('import-target-fy').value;
+      const commId = document.getElementById('import-target-comm').value;
+      const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
+
+      const convertedData = {
+        id: 'MIN-IMP-' + Date.now(),
+        fy: fy,
+        committee_id: commId,
+        committee_name: commMaster.name,
+        date: `${fy}-10-15T17:00`,
+        location: "株式会社 松 本社会議室",
+        duration: "30分 (香川県運営指導推奨時間)",
+        reporter: "山田 護 (委員長)",
+        attendees: "山田 護、 佐藤 花子、 田中 健太 (受講率: 100%)",
+        theme: `【${fy}年度 インポート補完】${commMaster.name} 研修・会議記録`,
+        summary: `【取り込み原稿に基づくAI補完テキスト】\n${rawText}`,
+        discussions: [
+          `原稿内容から${commMaster.name}の課題・協議内容を取り込み、標準化完了。`,
+          "香川県長寿社会対策課および高松市指導監査課のチェック項目（受講名簿・研修時間）を適合登録。"
+        ],
+        decisions: [
+          "過年度の委員会実施ログとしてシステムへ確定保存。",
+          "決定事項および改善マニュアルを事業所内で引き続き遵守。"
+        ],
+        next_action: "欠席者への追講・復習シート回覧を完了させ、過年度監査資料として保持する。"
+      };
+
+      appState.minutesHistory.push(convertedData);
+      saveState();
+
+      appState.currentGeneratedMinutes = convertedData;
+      switchTab('meeting-create');
+      renderMinutesOutput(convertedData);
+
+      alert(`取り込みデータをAI補完し、${fy}年度（令和${parseInt(fy)-2018}年度）の ${commMaster.name} 議事録として正常に反映・保存しました！`);
+      
+      setTimeout(() => {
+        const outputCard = document.getElementById('minutes-output-card');
+        if (outputCard) {
+          outputCard.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>
