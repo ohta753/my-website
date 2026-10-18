@@ -396,13 +396,16 @@
 
         <!-- Output Document Preview -->
         <div id="minutes-output-card" class="bg-white rounded-xl p-8 shadow-md border border-slate-200 hidden space-y-6">
-          <div class="flex justify-between items-center border-b pb-4 no-print">
-            <h3 class="font-bold text-lg text-teal-800">議事録プレビュー（香川県・高松市 運営指導提出可能）</h3>
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4 no-print">
+            <div>
+              <h3 class="font-bold text-lg text-teal-800">議事録プレビュー（保存前に直接編集可能です）</h3>
+              <p class="text-xs text-slate-500">文面を直接書き換えてから「システムへ確定保存」または「印刷」を行ってください。</p>
+            </div>
             <div class="flex gap-2">
-              <button onclick="window.print()" class="bg-slate-800 text-white text-xs px-3 py-2 rounded flex items-center gap-1">
+              <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded flex items-center gap-1 transition">
                 <i data-lucide="printer" class="w-4 h-4"></i> 印刷 / PDF出力
               </button>
-              <button onclick="saveCurrentMinutes()" class="bg-teal-600 text-white text-xs px-3 py-2 rounded flex items-center gap-1">
+              <button onclick="saveCurrentMinutes()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-3.5 py-2 rounded font-bold shadow flex items-center gap-1 transition">
                 <i data-lucide="save" class="w-4 h-4"></i> システムへ確定保存
               </button>
             </div>
@@ -449,22 +452,26 @@
               </tbody>
             </table>
 
-            <div class="space-y-3 text-xs">
+            <!-- 手動編集可能なテキストエリア群 -->
+            <div class="space-y-4 text-xs">
               <div class="border border-slate-300 p-3 rounded">
-                <h4 class="font-bold border-b pb-1 mb-1">1. 実施研修の概要および講義ポイント</h4>
-                <p id="out-training-summary" class="whitespace-pre-wrap leading-relaxed">-</p>
+                <h4 class="font-bold border-b pb-1 mb-2 text-teal-800">1. 実施研修の概要および講義ポイント</h4>
+                <textarea id="edit-summary" rows="3" onchange="syncEditedMinutesData()" class="w-full border border-slate-200 rounded p-2 text-xs leading-relaxed focus:ring-1 focus:ring-teal-500"></textarea>
               </div>
+
               <div class="border border-slate-300 p-3 rounded">
-                <h4 class="font-bold border-b pb-1 mb-1">2. 協議・検討事項（実効性の確認）</h4>
-                <ul id="out-discussion-points" class="list-disc list-inside space-y-1"></ul>
+                <h4 class="font-bold border-b pb-1 mb-2 text-teal-800">2. 協議・検討事項（実効性の確認）<span class="font-normal text-[10px] text-slate-500">(1行に1項目を入力)</span></h4>
+                <textarea id="edit-discussions" rows="4" onchange="syncEditedMinutesData()" class="w-full border border-slate-200 rounded p-2 text-xs leading-relaxed focus:ring-1 focus:ring-teal-500"></textarea>
               </div>
-              <div class="border border-slate-300 p-3 rounded bg-slate-50">
-                <h4 class="font-bold border-b pb-1 mb-1">3. 決定事項および事業所運用ルール</h4>
-                <ul id="out-decisions" class="list-disc list-inside space-y-1 font-medium"></ul>
+
+              <div class="border border-slate-300 p-3 rounded bg-slate-50/50">
+                <h4 class="font-bold border-b pb-1 mb-2 text-teal-800">3. 決定事項および事業所運用ルール <span class="font-normal text-[10px] text-slate-500">(1行に1項目を入力)</span></h4>
+                <textarea id="edit-decisions" rows="3" onchange="syncEditedMinutesData()" class="w-full border border-slate-200 rounded p-2 text-xs leading-relaxed focus:ring-1 focus:ring-teal-500 font-medium"></textarea>
               </div>
+
               <div class="border border-slate-300 p-3 rounded">
-                <h4 class="font-bold border-b pb-1 mb-1">4. 欠席者への追講・次回アクション</h4>
-                <p id="out-next-action" class="leading-relaxed">-</p>
+                <h4 class="font-bold border-b pb-1 mb-2 text-teal-800">4. 欠席者への追講・次回アクション</h4>
+                <textarea id="edit-next-action" rows="2" onchange="syncEditedMinutesData()" class="w-full border border-slate-200 rounded p-2 text-xs leading-relaxed focus:ring-1 focus:ring-teal-500"></textarea>
               </div>
             </div>
 
@@ -526,7 +533,7 @@
             </div>
 
             <button type="button" onclick="convertImportedTextToMinutes()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
-              <i data-lucide="wand-2" class="w-4 h-4"></i> 原文を各項目へ自動整理・標準フォーマットへ変換して保存
+              <i data-lucide="wand-2" class="w-4 h-4"></i> 原文を各項目へ自動整理・標準フォーマットへ変換（編集可能プレビュー表示）
             </button>
           </div>
         </div>
@@ -839,7 +846,7 @@
 
             <div class="flex items-center gap-2">
               <button onclick="viewHistoryMinutes('${min.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-1.5 rounded font-medium transition">
-                詳細表示
+                詳細表示・編集
               </button>
               <button onclick="deleteSingleMinutes('${min.id}')" title="削除" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-1.5 rounded border border-rose-200 transition">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -1128,7 +1135,7 @@
         location: locationVal,
         duration: `${durationVal}分`,
         reporter: reporterVal || "山田 護 (委員長)",
-        attendees: attendeeNames.length > 0 ? attendeeNames.join('、 ') : "山田 護、 佐藤 花子",
+        attendees: attendeeNames.length > 0 ? attendeeNames.join('、 ') : "山田 护、 佐藤 花子",
         theme: themeVal,
         summary: `本日は【${themeVal}】をテーマとして当委員会の研修および協議を実施した。香川県および高松市の運営指導要領に基づき、各種手順と実効性を検証した。`,
         discussions: [
@@ -1152,6 +1159,7 @@
       document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // プレビュー表示 & 編集フィールドへの同期
     function renderMinutesOutput(data) {
       document.getElementById('out-committee-name').textContent = data.committee_name;
       document.getElementById('out-datetime').textContent = data.date.replace('T', ' ');
@@ -1161,34 +1169,46 @@
       document.getElementById('out-attendees').textContent = data.attendees;
       document.getElementById('out-theme').textContent = data.theme;
       
-      document.getElementById('out-training-summary').textContent = data.summary;
-
-      const discUl = document.getElementById('out-discussion-points');
-      discUl.innerHTML = '';
-      data.discussions.forEach(d => {
-        const li = document.createElement('li');
-        li.textContent = d;
-        discUl.appendChild(li);
-      });
-
-      const decUl = document.getElementById('out-decisions');
-      decUl.innerHTML = '';
-      data.decisions.forEach(d => {
-        const li = document.createElement('li');
-        li.textContent = d;
-        decUl.appendChild(li);
-      });
-
-      document.getElementById('out-next-action').textContent = data.next_action;
+      // テキストエリアに既存の値を反映（手動編集用）
+      document.getElementById('edit-summary').value = data.summary || "";
+      document.getElementById('edit-discussions').value = Array.isArray(data.discussions) ? data.discussions.join('\n') : (data.discussions || "");
+      document.getElementById('edit-decisions').value = Array.isArray(data.decisions) ? data.decisions.join('\n') : (data.decisions || "");
+      document.getElementById('edit-next-action').value = data.next_action || "";
 
       document.getElementById('minutes-output-card').classList.remove('hidden');
     }
 
+    // 編集中の変更内容をデータへ同期する
+    function syncEditedMinutesData() {
+      if (!appState.currentGeneratedMinutes) return;
+
+      const summaryText = document.getElementById('edit-summary').value;
+      const discussionsText = document.getElementById('edit-discussions').value;
+      const decisionsText = document.getElementById('edit-decisions').value;
+      const nextActionText = document.getElementById('edit-next-action').value;
+
+      appState.currentGeneratedMinutes.summary = summaryText;
+      appState.currentGeneratedMinutes.discussions = discussionsText.split('\n').filter(line => line.trim() !== '');
+      appState.currentGeneratedMinutes.decisions = decisionsText.split('\n').filter(line => line.trim() !== '');
+      appState.currentGeneratedMinutes.next_action = nextActionText;
+    }
+
     function saveCurrentMinutes() {
       if (!appState.currentGeneratedMinutes) return;
-      appState.minutesHistory.push(appState.currentGeneratedMinutes);
+
+      // 保存直前に最新のテキストエリア入力を同期
+      syncEditedMinutesData();
+
+      // 既存データの更新または新規保存
+      const existingIdx = appState.minutesHistory.findIndex(m => m.id === appState.currentGeneratedMinutes.id);
+      if (existingIdx >= 0) {
+        appState.minutesHistory[existingIdx] = appState.currentGeneratedMinutes;
+      } else {
+        appState.minutesHistory.push(appState.currentGeneratedMinutes);
+      }
+
       saveState();
-      alert('株式会社 松 の運営管理ログとして確定・保存しました。');
+      alert('編集した議事録を確定・保存しました。');
       switchTab('dashboard');
     }
 
@@ -1284,7 +1304,7 @@
       }
     }
 
-    // 原文テキストの自動補完・構造化ロジック (システム文言排除・実データの自動分解)
+    // 原文テキストの自動補完・構造化ロジック (手動編集プレビューへ連携)
     function convertImportedTextToMinutes() {
       const rawText = document.getElementById('import-text-preview').value;
       if (!rawText.trim() || rawText.includes("解析中...")) {
@@ -1296,7 +1316,6 @@
       const commId = document.getElementById('import-target-comm').value;
       const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
 
-      // 原文を改行・文章ごとに分解
       const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
       let extractedSummary = "";
@@ -1304,7 +1323,6 @@
       let extractedDecisions = [];
       let extractedNextAction = "";
 
-      // 文章のキーワードから項目を分類・構造化
       lines.forEach(line => {
         if (line.includes('決定') || line.includes('ルール') || line.includes('周知') || line.includes('行うこととする') || line.includes('決まった')) {
           extractedDecisions.push(line);
@@ -1325,7 +1343,6 @@
         }
       });
 
-      // 原文から該当項目が十分抽出できなかった場合の自然な補完（原文ベース）
       if (!extractedSummary) {
         extractedSummary = rawText.substring(0, 200) + (rawText.length > 200 ? "..." : "");
       }
@@ -1343,7 +1360,6 @@
         extractedNextAction = "欠席者に対しては資料の回覧および個別説明による追講を実施し、理解度の確認を行います。";
       }
 
-      // 議事録データ構造（香川県・高松市提出適合）
       const convertedData = {
         id: 'MIN-IMP-' + Date.now(),
         fy: fy,
@@ -1361,15 +1377,11 @@
         next_action: extractedNextAction
       };
 
-      // 保存・反映
-      appState.minutesHistory.push(convertedData);
-      saveState();
-
       appState.currentGeneratedMinutes = convertedData;
       switchTab('meeting-create');
       renderMinutesOutput(convertedData);
 
-      alert(`取り込んだ原稿内容を整理し、${fy}年度（令和${parseInt(fy)-2018}年度）の ${commMaster.name} 議事録として反映・保存しました。`);
+      alert(`取り込んだ原稿内容をプレビュー表示しました。\n文面を自由に確認・加筆修正してから「システムへ確定保存」を行ってください。`);
       
       setTimeout(() => {
         const outputCard = document.getElementById('minutes-output-card');
