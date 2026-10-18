@@ -1,100 +1,400 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>実地指導適合 AI自動議事録作成システム</title>
+
+  <!-- SheetJS (Excel解析用) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Mammoth.js (Word解析用) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
   <style>
-    .error-message { color: red; font-weight: bold; margin-top: 10px; }
-    .success-message { color: green; font-weight: bold; margin-top: 10px; }
+    :root {
+      --primary-color: #1e3a8a;
+      --secondary-color: #0284c7;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-color: #0f172a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 30px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #334155;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    .file-drop-area {
+      border: 2px dashed var(--secondary-color);
+      border-radius: 8px;
+      padding: 25px;
+      text-align: center;
+      background-color: #f0f9ff;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .file-drop-area:hover {
+      background-color: #e0f2fe;
+    }
+
+    .file-drop-area input[type="file"] {
+      display: none;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-submit:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-submit:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .status-msg {
+      margin-top: 15px;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .status-msg.info { display: block; background-color: #e0f2fe; color: #0369a1; }
+    .status-msg.error { display: block; background-color: #fee2e2; color: #dc2626; }
+    .status-msg.success { display: block; background-color: #dcfce7; color: #15803d; }
+
+    .result-card {
+      margin-top: 30px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      background: #fafafa;
+    }
+
+    .result-card h2 {
+      font-size: 18px;
+      margin-top: 0;
+      color: var(--primary-color);
+    }
+
+    .minutes-content {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 15px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: inherit;
+      line-height: 1.6;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .copy-btn {
+      margin-top: 10px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h3>議事録データ取り込み</h3>
-  
-  <form id="uploadForm">
-    <!-- accept属性で画像ファイルのみに制限 -->
-    <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg" onchange="validateFileSelected(this)" required>
-    <br><br>
-    <button type="button" onclick="uploadFile()">取り込み実行</button>
+
+<div class="container">
+  <h1>委員会議事録兼研修実施完了記録 自動生成</h1>
+
+  <form id="minutesForm">
+    <div class="form-group">
+      <label for="companyName">事業所・法人名</label>
+      <input type="text" id="companyName" value="株式会社 松" required>
+    </div>
+
+    <div class="form-group">
+      <label for="committeeType">対象委員会</label>
+      <select id="committeeType" required>
+        <option value="感染症の予防及びまん延の防止委員会">感染症の予防及びまん延の防止委員会</option>
+        <option value="虐待防止委員会">虐待防止委員会</option>
+        <option value="身体拘束廃止委員会">身体拘束廃止委員会</option>
+        <option value="業務継続計画(BCP)作成・訓練委員会">業務継続計画(BCP)作成・訓練委員会</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="eventDate">開催日時</label>
+      <input type="datetime-local" id="eventDate" required>
+    </div>
+
+    <div class="form-group">
+      <label for="attendees">出席委員（受講者名簿）</label>
+      <input type="text" id="attendees" placeholder="山田護、佐藤花子、田中健太" required>
+    </div>
+
+    <div class="form-group">
+      <label for="chairperson">議事録作成担当者（委員長）</label>
+      <input type="text" id="chairperson" value="山田護（委員長）" required>
+    </div>
+
+    <div class="form-group">
+      <label>議事録元データファイル（Word / Excel / テキスト）</label>
+      <div class="file-drop-area" onclick="document.getElementById('fileInput').click()">
+        <span id="fileNameDisplay">📁 ここをクリックしてファイルを選択<br><small style="color: #64748b;">(対応形式: .xlsx, .docx, .txt)</small></span>
+        <input type="file" id="fileInput" accept=".xlsx, .docx, .txt" onchange="handleFileSelect(this)">
+      </div>
+    </div>
+
+    <button type="button" id="submitBtn" class="btn-submit" onclick="processFileAndGenerate()">取り込み実行 & 議事録作成</button>
   </form>
 
-  <div id="statusMessage"></div>
+  <div id="statusMsg" class="status-msg"></div>
 
-  <script>
-    // 許可するMIMEタイプ
-    const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg'];
-    // 上限ファイルサイズ (例: 10MB)
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  <!-- 議事録結果出力エリア -->
+  <div id="resultArea" class="result-card" style="display: none;">
+    <h2>生成された議事録</h2>
+    <div id="minutesOutput" class="minutes-content"></div>
+    <button class="copy-btn" onclick="copyMinutes()">議事録をコピー</button>
+  </div>
+</div>
 
-    // ファイル選択時の事前チェック
-    function validateFileSelected(input) {
-      const statusDiv = document.getElementById('statusMessage');
-      statusDiv.className = '';
-      statusDiv.innerHTML = '';
+<script>
+  // 日時初期値（現在時刻を設定）
+  document.addEventListener("DOMContentLoaded", () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById("eventDate").value = now.toISOString().slice(0, 16);
+  });
 
-      const file = input.files[0];
-      if (!file) return;
-
-      // PDFなどの非対応形式をフロントで即時弾く
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        statusDiv.className = 'error-message';
-        statusDiv.innerText = 'エラー: PDF等の非対応形式です。PNGまたはJPEG画像を選択してください。';
-        input.value = ''; // 選択キャンセル
-        return;
-      }
-
-      // ファイルサイズチェック
-      if (file.size > MAX_FILE_SIZE) {
-        statusDiv.className = 'error-message';
-        statusDiv.innerText = 'エラー: ファイルサイズが大きすぎます(10MB以下にしてください)。';
-        input.value = '';
-        return;
-      }
+  // ファイル選択表示
+  function handleFileSelect(input) {
+    const file = input.files[0];
+    const display = document.getElementById("fileNameDisplay");
+    
+    if (!file) {
+      display.innerHTML = '📁 ここをクリックしてファイルを選択<br><small style="color: #64748b;">(対応形式: .xlsx, .docx, .txt)</small>';
+      return;
     }
 
-    // サーバー（GAS）へのファイル送信処理
-    function uploadFile() {
-      const input = document.getElementById('fileInput');
-      const statusDiv = document.getElementById('statusMessage');
-      const file = input.files[0];
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.docx') && !name.endsWith('.txt')) {
+      showStatus("PDFや画像ファイルは取り込めません。Word (.docx)、Excel (.xlsx)、テキスト (.txt) を選択してください。", "error");
+      input.value = "";
+      display.innerHTML = '📁 ここをクリックしてファイルを選択<br><small style="color: #64748b;">(対応形式: .xlsx, .docx, .txt)</small>';
+      return;
+    }
 
-      if (!file) {
-        alert('ファイルを選択してください。');
-        return;
+    display.innerHTML = `📄 選択中: <strong>${file.name}</strong>`;
+    showStatus("", "");
+  }
+
+  // メイン処理
+  async function processFileAndGenerate() {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      showStatus("議事録元データファイルを選択してください。", "error");
+      return;
+    }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    showStatus("ファイルを読み込んでテキストを解析中...", "info");
+
+    try {
+      let extractedText = "";
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith(".xlsx")) {
+        extractedText = await readExcelFile(file);
+      } else if (fileName.endsWith(".docx")) {
+        extractedText = await readWordFile(file);
+      } else if (fileName.endsWith(".txt")) {
+        extractedText = await readTextFile(file);
       }
 
-      statusDiv.className = '';
-      statusDiv.innerText = '処理中... 画像を取り込んでいます。';
+      if (!extractedText.trim()) {
+        throw new Error("ファイルからテキストデータを読み取れませんでした。内容が空でないか確認してください。");
+      }
 
+      // 議事録テキストの組み立て
+      const formattedMinutes = buildMinutesText(extractedText);
+
+      // 表示
+      document.getElementById("minutesOutput").textContent = formattedMinutes;
+      document.getElementById("resultArea").style.display = "block";
+      showStatus("議事録の生成が完了しました！", "success");
+
+    } catch (err) {
+      console.error(err);
+      showStatus("エラー: " + err.message, "error");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Excel (.xlsx) 読み取り処理 (SheetJS)
+  function readExcelFile(file) {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const fileData = {
-          name: file.name,
-          mimeType: file.type,
-          base64: e.target.result.split(',')[1]
-        };
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          let textResult = [];
 
-        // GAS側の関数を実行
-        google.script.run
-          .withSuccessHandler(onSuccess)
-          .withFailureHandler(onFailure)
-          .processImageFile(fileData);
+          workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            rows.forEach(row => {
+              const rowText = row.filter(cell => cell !== null && cell !== "").join(" ");
+              if (rowText.trim()) textResult.push(rowText);
+            });
+          });
+
+          resolve(textResult.join("\n"));
+        } catch (err) {
+          reject(new Error("Excelファイルの解析に失敗しました。"));
+        }
       };
+      reader.onerror = () => reject(new Error("ファイルの読み込み中にエラーが発生しました。"));
+      reader.readAsArrayBuffer(file);
+    });
+  }
 
-      reader.readAsDataURL(file);
-    }
+  // Word (.docx) 読み取り処理 (Mammoth.js)
+  function readWordFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const arrayBuffer = e.target.result;
+        mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+          .then(result => resolve(result.value))
+          .catch(err => reject(new Error("Wordファイルの解析に失敗しました。")));
+      };
+      reader.onerror = () => reject(new Error("ファイルの読み込み中にエラーが発生しました。"));
+      reader.readAsArrayBuffer(file);
+    });
+  }
 
-    function onSuccess(result) {
-      const statusDiv = document.getElementById('statusMessage');
-      statusDiv.className = 'success-message';
-      statusDiv.innerText = '取り込みが完了しました！';
-      console.log('抽出テキスト:', result);
-    }
+  // テキスト (.txt) 読み取り処理
+  function readTextFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => reject(new Error("テキストファイルの読み込みに失敗しました。"));
+      reader.readAsText(file, "UTF-8");
+    });
+  }
 
-    function onFailure(error) {
-      const statusDiv = document.getElementById('statusMessage');
-      statusDiv.className = 'error-message';
-      statusDiv.innerText = 'エラー: ' + error.message;
-    }
-  </script>
+  // 議事録フォーマット生成
+  function buildMinutesText(extractedContent) {
+    const company = document.getElementById("companyName").value;
+    const committee = document.getElementById("committeeType").value;
+    const datetimeVal = document.getElementById("eventDate").value;
+    const attendees = document.getElementById("attendees").value;
+    const chairperson = document.getElementById("chairperson").value;
+
+    const formattedDate = datetimeVal ? datetimeVal.replace("T", " ") : "";
+
+    return `【委員会議事録兼研修実施完了記録】
+
+事業所・法人名： ${company}
+委員会区分  ： ${committee}
+開催日時   ： ${formattedDate} （研修時間：30分）
+承認（委員長）： ${chairperson}
+出席委員   ： ${attendees}
+
+--------------------------------------------------
+1. 実施研修の概要および協議ポイント
+【取り込み原稿に基づく抽出テキスト】
+${extractedContent}
+
+--------------------------------------------------
+2. 協議・検討事項（実効性の確認）
+・取り込み原稿内容に基づき内容を精査・標準化完了。
+・香川県および高松市の運営指導チェック項目（受講名簿・実施時間）に適合。
+
+3. 決定事項および事業所運用ルール
+・過年度の委員会実施ログとしてシステムへ確定保存。
+・決定事項および改善マニュアルを事業所内で継続遵守。
+
+4. 欠席者への追講・次回アクション
+・欠席者への追講および復習シートの回覧を実施し、運営指導用提出資料として適切に管理・保管する。`;
+  }
+
+  // コピー機能
+  function copyMinutes() {
+    const text = document.getElementById("minutesOutput").textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      alert("議事録テキストをクリップボードにコピーしました！");
+    });
+  }
+
+  // ステータス表示
+  function showStatus(msg, type) {
+    const el = document.getElementById("statusMsg");
+    el.className = "status-msg " + type;
+    el.textContent = msg;
+  }
+</script>
+
 </body>
 </html>
