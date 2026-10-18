@@ -1,3 +1,14 @@
+自動作成・インポートされた議事録の**上部基本情報（タイトル・日付・時間・場所・担当者・出席者）もプレビュー画面上で直接手動編集できる機能**を追加しました。
+
+あわせて、ファイル（Excel / Word / Text）を取り込んだ際、原文テキスト内に **「令和○年○月○日」** や **「202X/XX/XX」**、**「10:00〜11:00」** などの日時指定が含まれている場合は**正規表現で自動抽出して開催日時欄へ初期反映**するロジックを実装しました。
+
+---
+
+### 完全版コード（`index.html`）
+
+以下のコードを全選択してコピーし、GitHub上の `index.html` にそのまま上書き保存（Commit）してください。
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -394,12 +405,12 @@
           </form>
         </div>
 
-        <!-- Output Document Preview -->
+        <!-- Output Document Preview (上部タイトル・表項目も直接編集可能) -->
         <div id="minutes-output-card" class="bg-white rounded-xl p-8 shadow-md border border-slate-200 hidden space-y-6">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4 no-print">
             <div>
-              <h3 class="font-bold text-lg text-teal-800">議事録プレビュー（保存前に直接編集可能です）</h3>
-              <p class="text-xs text-slate-500">文面を直接書き換えてから「システムへ確定保存」または「印刷」を行ってください。</p>
+              <h3 class="font-bold text-lg text-teal-800">議事録プレビュー（タイトル・日時・表内容も直接修正できます）</h3>
+              <p class="text-xs text-slate-500">全ての欄を書き換え可能です。「システムへ確定保存」で確定保存されます。</p>
             </div>
             <div class="flex gap-2">
               <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded flex items-center gap-1 transition">
@@ -412,47 +423,67 @@
           </div>
 
           <div id="printable-area" class="space-y-6 text-slate-900">
+            <!-- タイトル直接編集欄 -->
             <div class="text-center border-b-2 border-slate-900 pb-3">
-              <h2 class="text-2xl font-bold">委員会議事録 兼 研修実施完了記録</h2>
-              <p class="text-xs text-slate-600 mt-1">株式会社 松 運営管理ログ</p>
+              <input type="text" id="edit-doc-title" onchange="syncEditedMinutesData()" value="委員会議事録 兼 研修実施完了記録" class="text-2xl font-bold text-center w-full border-b border-dashed border-slate-300 focus:border-teal-500 focus:outline-none py-1">
+              <input type="text" id="edit-doc-subtitle" onchange="syncEditedMinutesData()" value="株式会社 松 運営管理ログ" class="text-xs text-slate-600 text-center w-full border-b border-dashed border-slate-200 focus:border-teal-500 focus:outline-none mt-1 py-0.5">
             </div>
 
+            <!-- 基本情報表（全て入力フィールド化） -->
             <table class="w-full text-xs border-collapse border border-slate-400">
               <tbody>
                 <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 w-1/4 text-left">事業所・法人名</th>
-                  <td class="border border-slate-400 p-2 font-bold">株式会社 松</td>
+                  <td class="border border-slate-400 p-1.5 font-bold">
+                    <input type="text" id="edit-company-name" onchange="syncEditedMinutesData()" value="株式会社 松" class="w-full bg-transparent font-bold focus:outline-none">
+                  </td>
                   <th class="border border-slate-400 bg-slate-100 p-2 w-1/4 text-left">委員会区分</th>
-                  <td class="border border-slate-400 p-2 font-bold" id="out-committee-name">-</td>
+                  <td class="border border-slate-400 p-1.5 font-bold">
+                    <input type="text" id="edit-committee-name" onchange="syncEditedMinutesData()" class="w-full bg-transparent font-bold focus:outline-none">
+                  </td>
                 </tr>
                 <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">開催日時</th>
-                  <td class="border border-slate-400 p-2" id="out-datetime">-</td>
+                  <td class="border border-slate-400 p-1.5">
+                    <input type="text" id="edit-datetime" onchange="syncEditedMinutesData()" class="w-full bg-transparent focus:outline-none">
+                  </td>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">研修時間</th>
-                  <td class="border border-slate-400 p-2" id="out-duration">-</td>
+                  <td class="border border-slate-400 p-1.5">
+                    <input type="text" id="edit-duration" onchange="syncEditedMinutesData()" class="w-full bg-transparent focus:outline-none">
+                  </td>
                 </tr>
                 <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">開催場所</th>
-                  <td class="border border-slate-400 p-2" id="out-location">-</td>
+                  <td class="border border-slate-400 p-1.5">
+                    <input type="text" id="edit-location" onchange="syncEditedMinutesData()" class="w-full bg-transparent focus:outline-none">
+                  </td>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">承認（委員長）</th>
-                  <td class="border border-slate-400 p-2 font-semibold text-emerald-800">承認確認済 (電子ログ保持)</td>
+                  <td class="border border-slate-400 p-1.5">
+                    <input type="text" id="edit-approval" onchange="syncEditedMinutesData()" value="承認確認済 (電子ログ保持)" class="w-full bg-transparent font-semibold text-emerald-800 focus:outline-none">
+                  </td>
                 </tr>
                 <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">議事録作成担当</th>
-                  <td colspan="3" class="border border-slate-400 p-2 font-medium" id="out-reporter">-</td>
+                  <td colspan="3" class="border border-slate-400 p-1.5 font-medium">
+                    <input type="text" id="edit-reporter" onchange="syncEditedMinutesData()" class="w-full bg-transparent focus:outline-none">
+                  </td>
                 </tr>
                 <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">出席委員（受講者）</th>
-                  <td colspan="3" class="border border-slate-400 p-2" id="out-attendees">-</td>
+                  <td colspan="3" class="border border-slate-400 p-1.5">
+                    <input type="text" id="edit-attendees" onchange="syncEditedMinutesData()" class="w-full bg-transparent focus:outline-none">
+                  </td>
                 </tr>
                 <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">議題・研修テーマ</th>
-                  <td colspan="3" class="border border-slate-400 p-2 font-bold" id="out-theme">-</td>
+                  <td colspan="3" class="border border-slate-400 p-1.5 font-bold">
+                    <input type="text" id="edit-theme" onchange="syncEditedMinutesData()" class="w-full bg-transparent font-bold focus:outline-none">
+                  </td>
                 </tr>
               </tbody>
             </table>
 
-            <!-- 手動編集可能なテキストエリア群 -->
+            <!-- 本文テキストエリア群 -->
             <div class="space-y-4 text-xs">
               <div class="border border-slate-300 p-3 rounded">
                 <h4 class="font-bold border-b pb-1 mb-2 text-teal-800">1. 実施研修の概要および講義ポイント</h4>
@@ -490,7 +521,7 @@
               <i data-lucide="file-up" class="w-5 h-5 text-teal-600"></i> 過去議事録ファイル（Excel / Word / テキスト）インポート & 自動分類・補完
             </h2>
             <p class="text-xs text-slate-500 mt-1">
-              過年度のファイルを取り込み、原文の内容を構造化して香川県・高松市の実地指導要領フォーマットへ反映します。
+              過年度のファイルを取り込み、原文の日時・内容を自動解析して香川県・高松市の実地指導要領フォーマットへ反映します。
             </p>
           </div>
 
@@ -533,7 +564,7 @@
             </div>
 
             <button type="button" onclick="convertImportedTextToMinutes()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
-              <i data-lucide="wand-2" class="w-4 h-4"></i> 原文を各項目へ自動整理・標準フォーマットへ変換（編集可能プレビュー表示）
+              <i data-lucide="wand-2" class="w-4 h-4"></i> 原文を解析し各項目へ自動割り当て（手動編集プレビュー表示）
             </button>
           </div>
         </div>
@@ -837,7 +868,7 @@
               <div>
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-slate-800 text-sm">${min.committee_name}</span>
-                  <span class="text-slate-500">（${min.date.split('T')[0]} 開催）</span>
+                  <span class="text-slate-500">（${min.date.replace('T', ' ')} 開催）</span>
                   <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">${min.fy}年度</span>
                 </div>
                 <div class="text-slate-600 mt-1">議題: ${min.theme}</div>
@@ -865,7 +896,7 @@
       const target = appState.minutesHistory.find(m => m.id === id);
       if (!target) return;
 
-      if (confirm(`議事録「${target.committee_name} (${target.date.split('T')[0]})」を削除してもよろしいですか？`)) {
+      if (confirm(`議事録「${target.committee_name} (${target.date})」を削除してもよろしいですか？`)) {
         appState.minutesHistory = appState.minutesHistory.filter(m => m.id !== id);
         saveState();
         renderDashboard();
@@ -1130,12 +1161,16 @@
         id: 'MIN-' + Date.now(),
         fy: fy,
         committee_id: commId,
+        doc_title: "委員会議事録 兼 研修実施完了記録",
+        doc_subtitle: "株式会社 松 運営管理ログ",
+        company_name: "株式会社 松",
         committee_name: commMaster.name,
-        date: datetimeVal,
+        date: datetimeVal.replace('T', ' '),
         location: locationVal,
         duration: `${durationVal}分`,
+        approval: "承認確認済 (電子ログ保持)",
         reporter: reporterVal || "山田 護 (委員長)",
-        attendees: attendeeNames.length > 0 ? attendeeNames.join('、 ') : "山田 护、 佐藤 花子",
+        attendees: attendeeNames.length > 0 ? attendeeNames.join('、 ') : "山田 護、 佐藤 花子",
         theme: themeVal,
         summary: `本日は【${themeVal}】をテーマとして当委員会の研修および協議を実施した。香川県および高松市の運営指導要領に基づき、各種手順と実効性を検証した。`,
         discussions: [
@@ -1159,17 +1194,21 @@
       document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // プレビュー表示 & 編集フィールドへの同期
+    // プレビュー表示（上部タイトル・表項目・本文へのデータ反映）
     function renderMinutesOutput(data) {
-      document.getElementById('out-committee-name').textContent = data.committee_name;
-      document.getElementById('out-datetime').textContent = data.date.replace('T', ' ');
-      document.getElementById('out-location').textContent = data.location;
-      document.getElementById('out-duration').textContent = data.duration;
-      document.getElementById('out-reporter').textContent = data.reporter;
-      document.getElementById('out-attendees').textContent = data.attendees;
-      document.getElementById('out-theme').textContent = data.theme;
+      document.getElementById('edit-doc-title').value = data.doc_title || "委員会議事録 兼 研修実施完了記録";
+      document.getElementById('edit-doc-subtitle').value = data.doc_subtitle || "株式会社 松 運営管理ログ";
       
-      // テキストエリアに既存の値を反映（手動編集用）
+      document.getElementById('edit-company-name').value = data.company_name || "株式会社 松";
+      document.getElementById('edit-committee-name').value = data.committee_name || "";
+      document.getElementById('edit-datetime').value = data.date || "";
+      document.getElementById('edit-duration').value = data.duration || "";
+      document.getElementById('edit-location').value = data.location || "";
+      document.getElementById('edit-approval').value = data.approval || "承認確認済 (電子ログ保持)";
+      document.getElementById('edit-reporter').value = data.reporter || "";
+      document.getElementById('edit-attendees').value = data.attendees || "";
+      document.getElementById('edit-theme').value = data.theme || "";
+
       document.getElementById('edit-summary').value = data.summary || "";
       document.getElementById('edit-discussions').value = Array.isArray(data.discussions) ? data.discussions.join('\n') : (data.discussions || "");
       document.getElementById('edit-decisions').value = Array.isArray(data.decisions) ? data.decisions.join('\n') : (data.decisions || "");
@@ -1178,28 +1217,34 @@
       document.getElementById('minutes-output-card').classList.remove('hidden');
     }
 
-    // 編集中の変更内容をデータへ同期する
+    // プレビュー上の全ての編集入力をオブジェクトへ同期
     function syncEditedMinutesData() {
       if (!appState.currentGeneratedMinutes) return;
 
-      const summaryText = document.getElementById('edit-summary').value;
-      const discussionsText = document.getElementById('edit-discussions').value;
-      const decisionsText = document.getElementById('edit-decisions').value;
-      const nextActionText = document.getElementById('edit-next-action').value;
+      appState.currentGeneratedMinutes.doc_title = document.getElementById('edit-doc-title').value;
+      appState.currentGeneratedMinutes.doc_subtitle = document.getElementById('edit-doc-subtitle').value;
 
-      appState.currentGeneratedMinutes.summary = summaryText;
-      appState.currentGeneratedMinutes.discussions = discussionsText.split('\n').filter(line => line.trim() !== '');
-      appState.currentGeneratedMinutes.decisions = decisionsText.split('\n').filter(line => line.trim() !== '');
-      appState.currentGeneratedMinutes.next_action = nextActionText;
+      appState.currentGeneratedMinutes.company_name = document.getElementById('edit-company-name').value;
+      appState.currentGeneratedMinutes.committee_name = document.getElementById('edit-committee-name').value;
+      appState.currentGeneratedMinutes.date = document.getElementById('edit-datetime').value;
+      appState.currentGeneratedMinutes.duration = document.getElementById('edit-duration').value;
+      appState.currentGeneratedMinutes.location = document.getElementById('edit-location').value;
+      appState.currentGeneratedMinutes.approval = document.getElementById('edit-approval').value;
+      appState.currentGeneratedMinutes.reporter = document.getElementById('edit-reporter').value;
+      appState.currentGeneratedMinutes.attendees = document.getElementById('edit-attendees').value;
+      appState.currentGeneratedMinutes.theme = document.getElementById('edit-theme').value;
+
+      appState.currentGeneratedMinutes.summary = document.getElementById('edit-summary').value;
+      appState.currentGeneratedMinutes.discussions = document.getElementById('edit-discussions').value.split('\n').filter(line => line.trim() !== '');
+      appState.currentGeneratedMinutes.decisions = document.getElementById('edit-decisions').value.split('\n').filter(line => line.trim() !== '');
+      appState.currentGeneratedMinutes.next_action = document.getElementById('edit-next-action').value;
     }
 
     function saveCurrentMinutes() {
       if (!appState.currentGeneratedMinutes) return;
 
-      // 保存直前に最新のテキストエリア入力を同期
       syncEditedMinutesData();
 
-      // 既存データの更新または新規保存
       const existingIdx = appState.minutesHistory.findIndex(m => m.id === appState.currentGeneratedMinutes.id);
       if (existingIdx >= 0) {
         appState.minutesHistory[existingIdx] = appState.currentGeneratedMinutes;
@@ -1208,7 +1253,7 @@
       }
 
       saveState();
-      alert('編集した議事録を確定・保存しました。');
+      alert('上部基本情報・本文を含め、編集した議事録を確定・保存しました。');
       switchTab('dashboard');
     }
 
@@ -1304,7 +1349,32 @@
       }
     }
 
-    // 原文テキストの自動補完・構造化ロジック (手動編集プレビューへ連携)
+    // 原文から「日付・時間」表現を正規表現で抽出するヘルパー関数
+    function extractDateTimeFromText(text) {
+      // 和暦（令和X年X月X日）、西暦（202X年X月X日 / 202X/X/X）、時刻（10:00〜11:00 / 14時30分）などのパターン
+      const dateRegex = /(?:令和|R)?\s*([0-9０-９]+)年\s*([0-9０-９]+)月\s*([0-9０-９]+)日|(20[2-9][0-9][\/\.-][0-1]?[0-9][\/\.-][0-3]?[0-9])/;
+      const timeRegex = /([0-2]?[0-9][:\:\n時][0-5][0-9]?分?\s*[〜~-]\s*[0-2]?[0-9][:\:\n時][0-5][0-9]?分?)/;
+
+      const dateMatch = text.match(dateRegex);
+      const timeMatch = text.match(timeRegex);
+
+      let foundDate = "";
+      if (dateMatch) {
+        foundDate = dateMatch[0].replace(/\s+/g, '');
+      }
+
+      let foundTime = "";
+      if (timeMatch) {
+        foundTime = " " + timeMatch[0].replace(/\s+/g, '');
+      }
+
+      if (foundDate) {
+        return foundDate + foundTime;
+      }
+      return null;
+    }
+
+    // 原文テキストの自動構造化 & 日時自動抽出ロジック
     function convertImportedTextToMinutes() {
       const rawText = document.getElementById('import-text-preview').value;
       if (!rawText.trim() || rawText.includes("解析中...")) {
@@ -1315,6 +1385,10 @@
       const fy = document.getElementById('import-target-fy').value;
       const commId = document.getElementById('import-target-comm').value;
       const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
+
+      // 原文からの日時抽出テスト
+      const extractedDateTime = extractDateTimeFromText(rawText);
+      const defaultDateStr = extractedDateTime ? extractedDateTime : `${fy}年10月15日 17:00〜17:30`;
 
       const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
@@ -1364,10 +1438,14 @@
         id: 'MIN-IMP-' + Date.now(),
         fy: fy,
         committee_id: commId,
+        doc_title: "委員会議事録 兼 研修実施完了記録",
+        doc_subtitle: "株式会社 松 運営管理ログ",
+        company_name: "株式会社 松",
         committee_name: commMaster.name,
-        date: `${fy}-10-15T17:00`,
+        date: defaultDateStr,
         location: "株式会社 松 本社会議室",
         duration: "30分",
+        approval: "承認確認済 (電子ログ保持)",
         reporter: "山田 護 (委員長)",
         attendees: "山田 護、 佐藤 花子、 田中 健太 (受講率: 100%)",
         theme: `【${fy}年度】${commMaster.name} 研修・会議記録`,
@@ -1381,7 +1459,11 @@
       switchTab('meeting-create');
       renderMinutesOutput(convertedData);
 
-      alert(`取り込んだ原稿内容をプレビュー表示しました。\n文面を自由に確認・加筆修正してから「システムへ確定保存」を行ってください。`);
+      if (extractedDateTime) {
+        alert(`原稿から開催日時（${extractedDateTime}）を読み取って自動設定しました！\nプレビュー画面で修正を行ってから保存してください。`);
+      } else {
+        alert(`取り込んだ原稿内容をプレビュー表示しました。\n上部基本情報および本文を書き換えて「システムへ確定保存」を行ってください。`);
+      }
       
       setTimeout(() => {
         const outputCard = document.getElementById('minutes-output-card');
@@ -1393,3 +1475,5 @@
   </script>
 </body>
 </html>
+
+```
