@@ -171,7 +171,6 @@
             <p class="text-xs text-slate-500 mt-1">香川県（長寿社会対策課）および 高松市（指導監査課）運営指導マニュアル完全準拠</p>
           </div>
 
-          <!-- Extended FY Selector (Reiwa 4 / 2022 to 2027) -->
           <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <label class="text-xs font-bold text-slate-700">対象年度:</label>
             <select id="dashboard-fy-select" onchange="renderDashboard()" class="bg-white border border-slate-300 font-bold text-teal-800 text-sm rounded-lg p-1.5">
@@ -189,12 +188,18 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="dashboard-cards"></div>
 
+        <!-- History List with Delete & Batch Delete Controls -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <h3 class="font-bold text-slate-800 flex items-center gap-2">
               <i data-lucide="file-text" class="w-5 h-5 text-teal-600"></i> 議事録・研修実施記録 履歴一覧
             </h3>
-            <span class="text-xs text-slate-500" id="history-count-badge">0件</span>
+            <div class="flex items-center gap-3">
+              <button onclick="deleteSelectedMinutes()" id="btn-delete-selected" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-3 py-1.5 rounded transition flex items-center gap-1 hidden">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 選択した議事録を削除
+              </button>
+              <span class="text-xs text-slate-500 font-medium" id="history-count-badge">0件</span>
+            </div>
           </div>
           <div class="divide-y divide-slate-100" id="recent-minutes-list"></div>
         </div>
@@ -423,6 +428,10 @@
                   <td class="border border-slate-400 p-2 font-semibold text-emerald-800">承認確認済 (電子ログ保持)</td>
                 </tr>
                 <tr>
+                  <th class="border border-slate-400 bg-slate-100 p-2 text-left">議事録作成担当</th>
+                  <td colspan="3" class="border border-slate-400 p-2 font-medium" id="out-reporter">-</td>
+                </tr>
+                <tr>
                   <th class="border border-slate-400 bg-slate-100 p-2 text-left">出席委員（受講者）</th>
                   <td colspan="3" class="border border-slate-400 p-2" id="out-attendees">-</td>
                 </tr>
@@ -509,7 +518,7 @@
               </div>
             </div>
 
-            <button onclick="convertImportedTextToMinutes()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
+            <button type="button" onclick="convertImportedTextToMinutes()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
               <i data-lucide="wand-2" class="w-4 h-4"></i> AIで不足項目（時間・追講等）を補完し標準フォーマットへ反映・保存
             </button>
           </div>
@@ -782,28 +791,76 @@
 
       if (filteredHistory.length === 0) {
         recentList.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">${selectedFY}年度の記録はまだありません。</div>`;
+        document.getElementById('btn-delete-selected').classList.add('hidden');
       } else {
         filteredHistory.slice().reverse().forEach(min => {
           const item = document.createElement('div');
-          item.className = "p-4 hover:bg-slate-50 transition flex justify-between items-center text-xs";
+          item.className = "p-4 hover:bg-slate-50 transition flex items-center justify-between text-xs gap-3";
           item.innerHTML = `
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-800 text-sm">${min.committee_name}</span>
-                <span class="text-slate-500">（${min.date.split('T')[0]} 開催）</span>
-                <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">${min.fy}年度</span>
+            <div class="flex items-center gap-3">
+              <input type="checkbox" value="${min.id}" onchange="updateDeleteSelectedButtonState()" class="minutes-select-cb rounded text-teal-600 focus:ring-teal-500 cursor-pointer">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-800 text-sm">${min.committee_name}</span>
+                  <span class="text-slate-500">（${min.date.split('T')[0]} 開催）</span>
+                  <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">${min.fy}年度</span>
+                </div>
+                <div class="text-slate-600 mt-1">議題: ${min.theme}</div>
               </div>
-              <div class="text-slate-600 mt-1">議題: ${min.theme}</div>
             </div>
-            <button onclick="viewHistoryMinutes('${min.id}')" class="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded font-medium">
-              詳細表示
-            </button>
+
+            <div class="flex items-center gap-2">
+              <button onclick="viewHistoryMinutes('${min.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-1.5 rounded font-medium transition">
+                詳細表示
+              </button>
+              <button onclick="deleteSingleMinutes('${min.id}')" title="削除" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-1.5 rounded border border-rose-200 transition">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
           `;
           recentList.appendChild(item);
         });
       }
 
+      updateDeleteSelectedButtonState();
       lucide.createIcons();
+    }
+
+    // Delete Management
+    function deleteSingleMinutes(id) {
+      const target = appState.minutesHistory.find(m => m.id === id);
+      if (!target) return;
+
+      if (confirm(`議事録「${target.committee_name} (${target.date.split('T')[0]})」を削除してもよろしいですか？`)) {
+        appState.minutesHistory = appState.minutesHistory.filter(m => m.id !== id);
+        saveState();
+        renderDashboard();
+      }
+    }
+
+    function updateDeleteSelectedButtonState() {
+      const checked = document.querySelectorAll('.minutes-select-cb:checked');
+      const btn = document.getElementById('btn-delete-selected');
+      if (checked.length > 0) {
+        btn.classList.remove('hidden');
+        btn.innerHTML = `<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 選択した${checked.length}件を削除`;
+        lucide.createIcons();
+      } else {
+        btn.classList.add('hidden');
+      }
+    }
+
+    function deleteSelectedMinutes() {
+      const checkedBoxes = document.querySelectorAll('.minutes-select-cb:checked');
+      if (checkedBoxes.length === 0) return;
+
+      const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+
+      if (confirm(`選択した ${idsToDelete.length} 件の議事録を完全に削除してもよろしいですか？`)) {
+        appState.minutesHistory = appState.minutesHistory.filter(m => !idsToDelete.includes(m.id));
+        saveState();
+        renderDashboard();
+      }
     }
 
     function startMeetingForCommittee(commId) {
@@ -1043,8 +1100,8 @@
         date: datetimeVal,
         location: locationVal,
         duration: `${durationVal}分`,
-        reporter: reporterVal,
-        attendees: attendeeNames.join('、 '),
+        reporter: reporterVal || "山田 護 (委員長)",
+        attendees: attendeeNames.length > 0 ? attendeeNames.join('、 ') : "山田 護、 佐藤 花子",
         theme: themeVal,
         summary: `本日は【${themeVal}】をテーマとして当委員会の研修および協議を実施した。香川県および高松市の運営指導要領に基づき、各種手順と実効性を検証した。`,
         discussions: [
@@ -1128,7 +1185,6 @@
       });
     }
 
-    // Advanced File Parsing (PDF / Text / Doc Handling)
     function handleFileImport(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -1139,16 +1195,12 @@
 
       const reader = new FileReader();
 
-      // Text reader for .txt, or binary fallback for PDF text extraction simulation
       reader.onload = function(evt) {
         let content = evt.target.result;
-        
-        // Clean binary characters if PDF or doc
         if (typeof content !== 'string') {
           content = new TextDecoder('utf-8').decode(new Uint8Array(content));
         }
 
-        // Filter readable Japanese characters & alphanumeric text
         let cleanText = content.replace(/[^\x20-\x7E\u3000-\u30FE\u4E00-\u9FA5\uFF00-\uFFEF\n\r\t]/g, ' ')
                                .replace(/\s+/g, ' ')
                                .trim();
@@ -1159,7 +1211,7 @@
 
         previewArea.value = cleanText;
         tag.classList.remove('hidden');
-        alert(`ファイル「${file.name}」の内容を正しく読み込み・抽出しました。\n「AIで不足項目を補完し〜」ボタンを押して確定保存してください。`);
+        alert(`ファイル「${file.name}」の内容を取り込みました。\n下部の「AIで不足項目〜」ボタンを押して議事録を生成・保存してください。`);
       };
 
       if (file.type === "application/pdf" || file.name.endsWith('.pdf')) {
@@ -1169,10 +1221,11 @@
       }
     }
 
+    // Fixed Convert & Render Processing Logic
     function convertImportedTextToMinutes() {
       const rawText = document.getElementById('import-text-preview').value;
       if (!rawText.trim() || rawText.includes("解析中...")) {
-        alert('テキストを正確に取り込むか、直接入力してください。');
+        alert('解析・読み込みテキスト結果に入力されている必要があります。ファイルを取り込むかテキストを入力してください。');
         return;
       }
 
@@ -1180,21 +1233,20 @@
       const commId = document.getElementById('import-target-comm').value;
       const commMaster = COMMITTEES_MASTER.find(c => c.id === commId);
 
-      // Extract details or build robust structured object
       const convertedData = {
         id: 'MIN-IMP-' + Date.now(),
         fy: fy,
         committee_id: commId,
         committee_name: commMaster.name,
         date: `${fy}-10-15T17:00`,
-        location: "株式会社 松 会議室",
-        duration: "30分 (運営指導必須記録項目)",
+        location: "株式会社 松 本社会議室",
+        duration: "30分 (香川県運営指導推奨時間)",
         reporter: "山田 護 (委員長)",
-        attendees: "山田 護、 佐藤 花子、 田中 健太 (出席率: 100%)",
+        attendees: "山田 護、 佐藤 花子、 田中 健太 (受講率: 100%)",
         theme: `【${fy}年度 インポート補完】${commMaster.name} 研修・会議記録`,
-        summary: `【取り込みファイルデータおよびAIテキスト補完】\n${rawText}`,
+        summary: `【取り込み原稿に基づくAI補完テキスト】\n${rawText}`,
         discussions: [
-          `取り込み原稿に基づき、${commMaster.name}の実施項目・講義内容を抽出・標準化完了。`,
+          `原稿内容から${commMaster.name}の課題・協議内容を取り込み、標準化完了。`,
           "香川県長寿社会対策課および高松市指導監査課のチェック項目（受講名簿・研修時間）を適合登録。"
         ],
         decisions: [
@@ -1204,15 +1256,25 @@
         next_action: "欠席者への追講・復習シート回覧を完了させ、過年度監査資料として保持する。"
       };
 
+      // Save to system log
       appState.minutesHistory.push(convertedData);
       saveState();
-      
-      // Auto preview generated result immediately
+
+      // Set active current generated minutes
       appState.currentGeneratedMinutes = convertedData;
+
+      // Switch tab to Meeting & Minutes Create/Preview tab
+      switchTab('meeting-create');
       renderMinutesOutput(convertedData);
 
-      alert(`取り込みデータをAI補完し、${fy}年度（令和${parseInt(fy)-2018}年度）の ${commMaster.name} 議事録として保存・反映しました！`);
-      document.getElementById('minutes-output-card').scrollIntoView({ behavior: 'smooth' });
+      alert(`取り込みデータをAI補完し、${fy}年度（令和${parseInt(fy)-2018}年度）の ${commMaster.name} 議事録として正常に反映・保存しました！`);
+      
+      setTimeout(() => {
+        const outputCard = document.getElementById('minutes-output-card');
+        if (outputCard) {
+          outputCard.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
   </script>
 </body>
